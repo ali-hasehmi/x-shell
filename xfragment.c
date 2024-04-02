@@ -164,7 +164,7 @@ int recv_xfragment(const xtcpsocket_t *_socket, xfragment_t *_fragment)
 int create_ack_init_xfragment(xfragment_t *_fragment)
 {
     _fragment->buff_len = 0;
-    _fragment->f_flag = XFLAG_ACK_INIT;
+    _fragment->f_flag = XFLAG_ACK_FINIT;
     _fragment->f_offset = 0;
     return 0;
 }
@@ -191,11 +191,11 @@ int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file)
                 "[!] make_xhandshake_d() failed: could not copy file name\r\n");
         return -1;
     }
-    if (mkdir(default_store_path,0777) && errno != EEXIST)
+    if (mkdir(default_store_path, 0777) && errno != EEXIST)
     {
         fprintf(stderr,
                 "[!] make_xhandshake_d():mkdir() failed: %s\r\n", strerror(errno));
-                printf("%d \n",errno);
+        printf("%d \n", errno);
         return -1;
     }
     if (xfopen(full_path, _file, XF_CREAT | XF_WRONLY | XF_EXCL))
@@ -205,7 +205,7 @@ int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file)
         return -1;
     }
     _file->x_size = init_frag.f_size;
-    init_frag.f_flag = XFLAG_ACK_INIT;
+    init_frag.f_flag = XFLAG_ACK_FINIT;
     if (send_xfragment(_socket, &init_frag) == -1)
     {
         fprintf(stderr,
@@ -231,7 +231,7 @@ int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file)
                 "[!] make_xhandshake() failed: could not receive initital Ack fragment\r\n");
         return -1;
     }
-    if (init_frag.f_flag != XFLAG_ACK_INIT)
+    if (init_frag.f_flag != XFLAG_ACK_FINIT)
     {
         fprintf(stderr,
                 "[!] make_xhandshake() failed: not a valid initital Ack fragment\r\n");
@@ -243,7 +243,7 @@ int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file)
 int create_init_xfragment(xfragment_t *_fragment, const xfile_t *_file)
 {
     _fragment->buff_len = 0;
-    _fragment->f_flag = XFLAG_INIT;
+    _fragment->f_flag = XFLAG_FINIT;
 
     char file_name[160];
     if (strcpy(file_name, _file->x_path.p_fname) == NULL)

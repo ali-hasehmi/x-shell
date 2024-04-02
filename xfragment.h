@@ -13,11 +13,14 @@
 
 #define XFBUFF_SIZE 8 * KiB
 
-#define XFLAG_INIT 0
-#define XFLAG_ACK_INIT 1
+#define XFLAG_FINIT 0
+#define XFLAG_ACK_FINIT 1
 #define XFLAG_FILE_DATA 2
-#define XFLAG_FINISH 3
-#define XFLAG_ACK_FINISH 4
+#define XFLAG_FFINISH 3
+#define XFLAG_ACK_SHFINISH 4
+#define XFLAG_ACK_SHFINISH 5
+#define XFLAG_ACK_SHFINISH 6
+#define XFLAG_ACK_SHFINISH 7
 
 typedef struct xfragment
 {
