@@ -43,13 +43,13 @@ int create_init_xfragment(xfragment_t *_fragment, const xfile_t *_file_name);
 
 int create_ack_init_xfragment(xfragment_t *_fragment);
 
-int make_xhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file);
+int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file);
 
 /*
     making handshake from client
     sending initial xfragment
     letting reciever know the file name and size
 */
-int make_xhandshake(const xtcpsocket_t *_socket, const xfile_t *_file);
+int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file);
 
 #endif // XFRAGMENT_H

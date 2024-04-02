@@ -2,12 +2,14 @@
 #include <stdlib.h>
 
 #include "xtcpsocket.h"
+#include "xterminal.h"
 
 #define SERVER_PORT 1010
 #define BACKLOG_LIMIT 6
 
 int main()
 {
+    xterminal_init();
 
     xtcpsocket_t server_socket;
     if (xtcpsocket_create(&server_socket, AF_INET, xst_server) == -1)
@@ -39,9 +41,21 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    
-
     // SHELL MODE
+    if (xterminal_disable_buffering() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_disable_buffering() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
+
+    if (xterminal_disable_echoing() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_disable_echoing() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
     
+    xterminal_reset();
     return 0;
 }

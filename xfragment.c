@@ -169,7 +169,7 @@ int create_ack_init_xfragment(xfragment_t *_fragment)
     return 0;
 }
 
-int make_xhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file)
+int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file)
 {
     xfragment_t init_frag;
     if (recv_xfragment(_socket, &init_frag) == -1)
@@ -215,7 +215,7 @@ int make_xhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file)
     return 0;
 }
 
-int make_xhandshake(const xtcpsocket_t *_socket, const xfile_t *_file)
+int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file)
 {
     xfragment_t init_frag;
     create_init_xfragment(&init_frag, _file);
