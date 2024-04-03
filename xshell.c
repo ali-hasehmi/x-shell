@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 static int sg_master_fd = -1; /*INITIAL VALUE,
  if this value didn't change it means this code is running on requesting side*/
@@ -19,7 +20,7 @@ static xfragment_t sending_fragment;
 static xfragment_t recving_fragment;
 static bool is_connected = true;
 
-static int writeall(int _fd, const void *_buff, size_t *_buff_len)
+static int writeall(int _fd, const void *_buff, uint16_t *_buff_len)
 {
     size_t total = 0,
            bytesleft = *_buff_len;
@@ -29,6 +30,9 @@ static int writeall(int _fd, const void *_buff, size_t *_buff_len)
         n = write(_fd, _buff + total, bytesleft);
         if (n == -1)
         {
+            fprintf(stderr,
+                    "[!] writeall() failed: %s\r\n",
+                    strerror(errno));
             break;
         }
         total += n;
@@ -69,21 +73,26 @@ static void *write_worker(void *arg)
     {
         if (recv_xfragment(connection_socket, &recving_fragment) == -1)
         {
+            printf("[~] write_worker():recv_xfragment() return -1\n");
             is_connected = false;
             return NULL;
         }
 
-        if (recving_fragment.f_flag == XFLAG_SFINISH || recving_fragment.f_flag == XFLAG_ACK_SFINISH)
+        if ((recving_fragment.f_flag == XFLAG_SFINISH) || (recving_fragment.f_flag == XFLAG_ACK_SFINISH))
         {
+            printf("[~] write_worker(): detect finish fragment\n");
             is_connected = false;
             return NULL;
         }
-        if (writeall(tmp_fd, recving_fragment.buffer, &recving_fragment.buff_len) == -1)
+       
+        if (writeall(tmp_fd, recving_fragment.buffer, &(recving_fragment.buff_len)) == -1)
         {
+            printf("[~] write_worker(): writeall() return -1\n");
             is_connected = false;
             return NULL;
         }
     }
+    printf("[~] write_worker():is_connected is false\n");
 }
 
 static void *read_worker(void *arg)
@@ -117,18 +126,24 @@ static void *read_worker(void *arg)
         break;
     }
 
-    while (1)
+    while (is_connected)
     {
         if ((sending_fragment.buff_len = read(tmp_fd,
                                               sending_fragment.buffer,
                                               XFBUFF_SIZE)) == -1)
         {
+            fprintf(stderr,
+                    "[~] read_worker():read() failed: %s\r\n",
+                    strerror(errno));
             is_connected = false;
             return NULL;
         }
 
         if (send_xfragment(connection_socket, &sending_fragment) == -1)
         {
+            fprintf(stderr,
+                    "[~] read_worker():send_xfragment() failed: %s\r\n",
+                    strerror(errno));
             is_connected = false;
             return NULL;
         }
@@ -180,7 +195,7 @@ int make_shandshake_d()
                 "[!] make_shandshake_d() failed: could not receive initital fragment\r\n");
         return -1;
     }
-    if (init_frag.f_flag != XFLAG_FINIT)
+    if (init_frag.f_flag != XFLAG_SINIT)
     {
         fprintf(stderr,
                 "[!] make_shandshake_d() failed: receive fragment with invalid flag\r\n");
@@ -200,6 +215,7 @@ int make_shandshake_d()
         return -1;
     }
 
+    // printf("something in between!\n");
     init_frag.f_flag = XFLAG_ACK_SINIT_SUCCESS;
     init_frag.buff_len = 0;
     if (send_xfragment(connection_socket, &init_frag) == -1)
@@ -213,7 +229,7 @@ int make_shandshake_d()
 static int xshell_init()
 {
     int pid;
-    if ((pid = forkpty(&sg_master_fd, NULL, NULL, NULL) == -1))
+    if ((pid = forkpty(&sg_master_fd, NULL, NULL, NULL)) == -1)
     {
         fprintf(stderr, "[!] xshell_init():forkpty() failed: %s\r\n",
                 strerror(errno));
@@ -226,20 +242,30 @@ static int xshell_init()
     if (pid == 0)
     {
 
-        // create new session
-        setsid();
+        // // create new session
+        // if (setsid() == -1)
+        // {
+        //     perror("[!] setsid failed");
+        //     return -1;
+        // }
 
         // Execute bash shell
-        execl("/bin/zsh", "/bin/zsh", NULL);
-        // execve("/bin/bash", arg, NULL);
-        perror("execl"); // This line will execute only if execl fails
-        return -1;
+        if (execl("/bin/zsh", "/bin/zsh", NULL) == -1)
+        {
+            // execve("/bin/bash", arg, NULL);
+            perror("[!] execl"); // This line will execute only if execl fails
+            return -1;
+        }
+        return 0;
     }
-
     /*
         Parent Process
     */
-    return 0;
+    else
+    {
+        // printf(" fuckkkkk!\\\\n");
+        return 0;
+    }
 }
 
 int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state)
@@ -268,8 +294,19 @@ int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state)
         break;
     }
     is_connected = true;
-    pthread_create(&read_thread, NULL, &read_worker, NULL);
-    pthread_create(&write_thread, NULL, &write_worker, NULL);
+    if (pthread_create(&read_thread, NULL, &read_worker, NULL))
+    {
+        fprintf(stderr,
+                "[!] xshell_start()pthread_create() failed: %s\r\n",
+                strerror(errno));
+        return -1;
+    }
+    if (pthread_create(&write_thread, NULL, &write_worker, NULL))
+    {
+        fprintf(stderr,
+                "[!] xshell_start():pthread_create() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
     return 0;
 }
 
@@ -306,5 +343,10 @@ int xshell_finish()
 
 int xshell_wait()
 {
-    pthread_join(write_thread,NULL);
+    printf("[~]xshell_wait() runs!\n");
+    // pthread_join(write_thread, NULL);
+    while (is_connected)
+    {
+        usleep(1000);
+    }
 }

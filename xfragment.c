@@ -126,12 +126,12 @@ int send_xfragment(const xtcpsocket_t *_socket, const xfragment_t *_fragment)
     // send buffer data
     if (xtcpsocket_sendall(_socket,
                            &_fragment->buffer,
-                           _fragment->buff_len) != _fragment->buff_len)
+                           (uint64_t)_fragment->buff_len) != _fragment->buff_len)
     {
         return -1;
     }
 
-    fprintf(stdout, "[+] send_xfragment(): %luB sent!\n",
+    fprintf(stderr, "[+] send_xfragment(): %luB sent!\n",
             sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len);
 
     return 0;
@@ -155,7 +155,7 @@ int recv_xfragment(const xtcpsocket_t *_socket, xfragment_t *_fragment)
         return -1;
     }
 
-    fprintf(stdout, "[+] recv_xfragment(): %luB recieved!\n",
+    fprintf(stderr, "[+] recv_xfragment(): %luB recieved!\n",
             sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len);
 
     return 0;
@@ -239,8 +239,6 @@ int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file)
     }
     return 0;
 }
-
-
 
 int create_init_xfragment(xfragment_t *_fragment, const xfile_t *_file)
 {

@@ -5,14 +5,22 @@
 #include "xterminal.h"
 #include "xfragment.h"
 #include "xshell.h"
+#include <errno.h>
+#include <string.h>
 
 #define LISTEN_PORT 10100
 #define BACKLOG_LIMIT 6
 
 int main()
 {
+    if (freopen("./xshell.log", "w+", stderr) == NULL)
+    {
+        fprintf(stderr,
+                "[!] freopen() faild to open xshell.log: %s\r\n",
+                strerror(errno));
+    }
     xterminal_init();
-
+    atexit(&xterminal_reset);
     xtcpsocket_t server_socket;
     if (xtcpsocket_create(&server_socket, AF_INET, xst_server) == -1)
     {
@@ -49,6 +57,7 @@ int main()
     {
         fprintf(stderr,
                 "[!] xterminal_disable_buffering() failed\n\r");
+        xterminal_reset();
         exit(EXIT_FAILURE);
     }
 
@@ -56,6 +65,7 @@ int main()
     {
         fprintf(stderr,
                 "[!] xterminal_disable_echoing() failed\n\r");
+        xterminal_reset();
         exit(EXIT_FAILURE);
     }
 
@@ -63,6 +73,7 @@ int main()
     {
         fprintf(stderr,
                 "[!] xshell_start() failed\n\r");
+        xterminal_reset();
         exit(EXIT_FAILURE);
     }
     printf("[+] xshell started successfully!\n");
@@ -71,6 +82,7 @@ int main()
     {
         fprintf(stderr,
                 "[!] xshell_wait() failed\n\r");
+        xterminal_reset();
         exit(EXIT_FAILURE);
     }
     printf("[+] xshell session waite finished!\n");
@@ -79,9 +91,11 @@ int main()
     {
         fprintf(stderr,
                 "[!] xshell_finish() failed\n\r");
+        xterminal_reset();
+
         exit(EXIT_FAILURE);
     }
     printf("[+] xshell finished succesffuly finished!\n");
-        xterminal_reset();
+    xterminal_reset();
     return 0;
 }
