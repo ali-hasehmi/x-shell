@@ -17,10 +17,12 @@
 #define XFLAG_ACK_FINIT 1
 #define XFLAG_FILE_DATA 2
 #define XFLAG_FFINISH 3
-#define XFLAG_ACK_SHFINISH 4
-#define XFLAG_ACK_SHFINISH 5
-#define XFLAG_ACK_SHFINISH 6
-#define XFLAG_ACK_SHFINISH 7
+#define XFLAG_SINIT 4
+#define XFLAG_ACK_SINIT_SUCCESS 5
+#define XFLAG_ACK_SINIT_FAILURE 6
+#define XFLAG_SHELL_DATA 7
+#define XFLAG_SFINISH 8
+#define XFLAG_ACK_SFINISH 9
 
 typedef struct xfragment
 {
@@ -46,10 +48,15 @@ int create_init_xfragment(xfragment_t *_fragment, const xfile_t *_file_name);
 
 int create_ack_init_xfragment(xfragment_t *_fragment);
 
+/*
+    making handshake from responder in File mode
+    sending initial xfragment
+    letting reciever know the file name and size
+*/
 int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file);
 
 /*
-    making handshake from client
+    making handshake from Requester in File mode
     sending initial xfragment
     letting reciever know the file name and size
 */

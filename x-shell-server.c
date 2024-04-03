@@ -3,6 +3,7 @@
 
 #include "xtcpsocket.h"
 #include "xterminal.h"
+#include "xfragment.h"
 
 #define SERVER_PORT 1010
 #define BACKLOG_LIMIT 6
@@ -41,7 +42,8 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // SHELL MODE
+    // REQUEST A NEW SHELL SESSION
+    
     if (xterminal_disable_buffering() == -1)
     {
         fprintf(stderr,
@@ -55,7 +57,7 @@ int main()
                 "[!] xterminal_disable_echoing() failed\n\r");
         exit(EXIT_FAILURE);
     }
-    
+
     xterminal_reset();
     return 0;
 }
