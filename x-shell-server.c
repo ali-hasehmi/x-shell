@@ -6,7 +6,7 @@
 #include "xfragment.h"
 #include "xshell.h"
 
-#define SERVER_PORT 1010
+#define LISTEN_PORT 10100
 #define BACKLOG_LIMIT 6
 
 int main()
@@ -21,7 +21,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    if (xtcpsocket_bind(&server_socket, NULL, SERVER_PORT) == -1)
+    if (xtcpsocket_bind(&server_socket, NULL, LISTEN_PORT) == -1)
     {
         fprintf(stderr,
                 "[!] xtcpsocket_bind() failed\n\r");
@@ -44,7 +44,7 @@ int main()
     }
 
     // REQUEST A NEW SHELL SESSION
-    
+
     if (xterminal_disable_buffering() == -1)
     {
         fprintf(stderr,
@@ -58,7 +58,30 @@ int main()
                 "[!] xterminal_disable_echoing() failed\n\r");
         exit(EXIT_FAILURE);
     }
-    if(xshell_start())
-    xterminal_reset();
+
+    if (xshell_start(&client_socket, REQUESTER) == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_start() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
+    printf("[+] xshell started successfully!\n");
+
+    if (xshell_wait() == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_wait() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
+    printf("[+] xshell session waite finished!\n");
+
+    if (xshell_finish() == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_finish() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
+    printf("[+] xshell finished succesffuly finished!\n");
+        xterminal_reset();
     return 0;
 }

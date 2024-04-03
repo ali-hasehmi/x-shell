@@ -216,7 +216,7 @@ static int xshell_init()
     if ((pid = forkpty(&sg_master_fd, NULL, NULL, NULL) == -1))
     {
         fprintf(stderr, "[!] xshell_init():forkpty() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
 
@@ -230,7 +230,7 @@ static int xshell_init()
         setsid();
 
         // Execute bash shell
-        execl("/bin/bash", "/bin/bash", NULL);
+        execl("/bin/zsh", "/bin/zsh", NULL);
         // execve("/bin/bash", arg, NULL);
         perror("execl"); // This line will execute only if execl fails
         return -1;

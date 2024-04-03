@@ -2,6 +2,7 @@
 #include <termio.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 static struct termios init_terminal, current_terminal;
 
@@ -12,7 +13,7 @@ int xterminal_init()
     {
         fprintf(stderr,
                 "[!] tcgetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     current_terminal = init_terminal;
@@ -25,7 +26,7 @@ int xterminal_reset()
     {
         fprintf(stderr,
                 "[!] tcsetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     return 0;
@@ -38,7 +39,7 @@ int xterminal_disable_buffering()
     {
         fprintf(stderr,
                 "[!] tcsetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     return 0;
@@ -51,7 +52,7 @@ int xterminal_disable_echoing()
     {
         fprintf(stderr,
                 "[!] tcsetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     return 0;
@@ -64,7 +65,7 @@ int xterminal_enable_echoing()
     {
         fprintf(stderr,
                 "[!] tcsetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     return 0;
@@ -77,7 +78,7 @@ int xterminal_enable_buffering()
     {
         fprintf(stderr,
                 "[!] tcsetattr() failed: %s\r\n",
-                strerr(errno));
+                strerror(errno));
         return -1;
     }
     return 0;
