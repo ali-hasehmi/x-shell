@@ -210,7 +210,7 @@ int make_shandshake_d()
     return 0;
 }
 
-int xshell_init()
+static int xshell_init()
 {
     int pid;
     if ((pid = forkpty(&sg_master_fd, NULL, NULL, NULL) == -1))

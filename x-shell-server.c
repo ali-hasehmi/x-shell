@@ -4,6 +4,7 @@
 #include "xtcpsocket.h"
 #include "xterminal.h"
 #include "xfragment.h"
+#include "xshell.h"
 
 #define SERVER_PORT 1010
 #define BACKLOG_LIMIT 6
@@ -57,7 +58,7 @@ int main()
                 "[!] xterminal_disable_echoing() failed\n\r");
         exit(EXIT_FAILURE);
     }
-
+    if(xshell_start())
     xterminal_reset();
     return 0;
 }

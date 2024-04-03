@@ -22,7 +22,7 @@ int make_shandshake();
 */
 int make_shandshake_d();
 
-int xshell_init();
+static int xshell_init();
 
 
 /*
@@ -38,7 +38,7 @@ int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state);
 int xshell_finish();
 
 /*
-    wait for shell session until it finish
+    wait for shell session until it finishes
 */
 int xshell_wait();
 
