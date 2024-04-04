@@ -20,7 +20,7 @@ int xterminal_init()
     if (tcgetattr(0, &init_terminal_state) == -1)
     {
         fprintf(stderr,
-                "[!] tcgetattr() failed: %s\r\n",
+                "[!] xterminal_init():tcgetattr() failed: %s\r\n",
                 strerror(errno));
         return -1;
     }
@@ -29,7 +29,11 @@ int xterminal_init()
     // Register the xterminal_reset at exiting
     // Make sure terminal setting after this program wil
     // set back to initial state
-    atexit(&xterminal_reset);
+    if (atexit(&xterminal_reset))
+    {
+        fprintf(stderr,
+                "[!] xterminal_init():atexit() failed\r\n");
+    }
     return 0;
 }
 
@@ -41,7 +45,6 @@ void xterminal_reset()
                 "[!] tcsetattr() failed: %s\r\n",
                 strerror(errno));
     }
-    
 }
 
 int xterminal_disable_buffering()

@@ -1,4 +1,8 @@
+!*.c
+!*.h
+!*.sh
+!Makefile
+!./
+*
 .vscode
 test*
-*.txt
-*.log
