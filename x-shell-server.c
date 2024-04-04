@@ -13,14 +13,20 @@
 
 int main()
 {
-    if (freopen("./xshell.log", "w+", stderr) == NULL)
+
+    if (freopen("./xshell.log", "w", stderr) == NULL)
     {
         fprintf(stderr,
                 "[!] freopen() faild to open xshell.log: %s\r\n",
                 strerror(errno));
     }
-    xterminal_init();
-    atexit(&xterminal_reset);
+
+    if (xterminal_init() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_init() faild to save init terminal state\r\n");
+    }
+
     xtcpsocket_t server_socket;
     if (xtcpsocket_create(&server_socket, AF_INET, xst_server) == -1)
     {
@@ -53,19 +59,11 @@ int main()
 
     // REQUEST A NEW SHELL SESSION
 
-    if (xterminal_disable_buffering() == -1)
+    if (xterminal_enable_raw_mode() == -1)
     {
         fprintf(stderr,
-                "[!] xterminal_disable_buffering() failed\n\r");
-        xterminal_reset();
-        exit(EXIT_FAILURE);
-    }
-
-    if (xterminal_disable_echoing() == -1)
-    {
-        fprintf(stderr,
-                "[!] xterminal_disable_echoing() failed\n\r");
-        xterminal_reset();
+                "[!] xterminal_enable_raw_mode() failed\n\r");
+        // xterminal_reset();
         exit(EXIT_FAILURE);
     }
 
@@ -73,29 +71,35 @@ int main()
     {
         fprintf(stderr,
                 "[!] xshell_start() failed\n\r");
-        xterminal_reset();
+        // xterminal_reset();
         exit(EXIT_FAILURE);
     }
-    printf("[+] xshell started successfully!\n");
+    fprintf(stderr, "[+] xshell started successfully!\n");
 
     if (xshell_wait() == -1)
     {
         fprintf(stderr,
                 "[!] xshell_wait() failed\n\r");
-        xterminal_reset();
+        // xterminal_reset();
         exit(EXIT_FAILURE);
     }
-    printf("[+] xshell session waite finished!\n");
+    fprintf(stderr, "[+] xshell session waite finished!\n");
 
     if (xshell_finish() == -1)
     {
         fprintf(stderr,
                 "[!] xshell_finish() failed\n\r");
-        xterminal_reset();
+        // xterminal_reset();
 
         exit(EXIT_FAILURE);
     }
-    printf("[+] xshell finished succesffuly finished!\n");
-    xterminal_reset();
+    if (xterminal_disable_raw_mode() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_disable_raw_mode() failed\n\r");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(stderr, "[+] xshell finished succesffuly finished!\n");
+    // xterminal_reset();
     return 0;
 }

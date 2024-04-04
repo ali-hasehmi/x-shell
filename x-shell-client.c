@@ -5,6 +5,7 @@
 
 #define SERVER_IP (char *)"127.0.0.1"
 #define SERVER_PORT 10100
+
 int main()
 {
     xtcpsocket_t client_socket;

@@ -125,8 +125,8 @@ int send_xfragment(const xtcpsocket_t *_socket, const xfragment_t *_fragment)
 
     // send buffer data
     if (xtcpsocket_sendall(_socket,
-                           &_fragment->buffer,
-                           (uint64_t)_fragment->buff_len) != _fragment->buff_len)
+                           _fragment->buffer,
+                           _fragment->buff_len) != _fragment->buff_len)
     {
         return -1;
     }

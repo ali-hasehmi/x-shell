@@ -264,7 +264,7 @@ ssize_t xtcpsocket_sendall(const xtcpsocket_t *_socket, const void *_buff, size_
                 &_buff_size, 0))
     {
         fprintf(stderr,
-                "[!] xtcpsocket_send():sendall() failed: %s\r\n", strerror(errno));
+                "[!] xtcpsocket_sendall():sendall() failed: %s\r\n", strerror(errno));
     }
     return _buff_size;
 }

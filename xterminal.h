@@ -13,7 +13,7 @@ int xterminal_init();
     return 0 on success
     otherwise return -1
 */
-int xterminal_reset();
+void xterminal_reset();
 
 /*
     disable line buffering
@@ -42,5 +42,23 @@ int xterminal_enable_echoing();
     oterwise return -1
 */
 int xterminal_enable_buffering();
+
+/*
+    enable raw mode
+    no effect from terminal
+    return 0 on success
+    return -1 on failure
+*/
+int xterminal_enable_raw_mode();
+
+/*
+    disable raw mode
+    effect from terminal
+    return 0 on success
+    return -1 on failure
+*/
+int xterminal_disable_raw_mode();
+
+
 
 #endif // X_TERMINAL_H

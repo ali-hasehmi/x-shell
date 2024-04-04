@@ -330,7 +330,7 @@ int xshell_finish()
                 "[!] xshell_finish() failed: invalid state\r\n");
         break;
     }
-
+    
     if (send_xfragment(connection_socket, &finish_frag) == -1)
     {
         fprintf(stderr,
