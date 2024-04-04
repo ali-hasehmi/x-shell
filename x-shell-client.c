@@ -48,4 +48,5 @@ int main()
         exit(EXIT_FAILURE);
     }
     printf("[+] xshell finished succesffuly finished!\n");
+    getchar();
 }

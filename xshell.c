@@ -84,7 +84,7 @@ static void *write_worker(void *arg)
             is_connected = false;
             return NULL;
         }
-       
+
         if (writeall(tmp_fd, recving_fragment.buffer, &(recving_fragment.buff_len)) == -1)
         {
             printf("[~] write_worker(): writeall() return -1\n");
@@ -128,9 +128,10 @@ static void *read_worker(void *arg)
 
     while (is_connected)
     {
-        if ((sending_fragment.buff_len = read(tmp_fd,
-                                              sending_fragment.buffer,
-                                              XFBUFF_SIZE)) == -1)
+        ssize_t n;
+        if ((n = read(tmp_fd,
+                      sending_fragment.buffer,
+                      XFBUFF_SIZE)) == -1)
         {
             fprintf(stderr,
                     "[~] read_worker():read() failed: %s\r\n",
@@ -138,6 +139,8 @@ static void *read_worker(void *arg)
             is_connected = false;
             return NULL;
         }
+        sending_fragment.buff_len = n;
+        // printf("[~] read_worker():read(): %huB read!\n\r", sending_fragment.buff_len);
 
         if (send_xfragment(connection_socket, &sending_fragment) == -1)
         {
@@ -322,7 +325,7 @@ int xshell_finish()
 
     case RESPONDER:
         finish_frag.buff_len = 0;
-        finish_frag.f_flag = XFLAG_FFINISH;
+        finish_frag.f_flag = XFLAG_SFINISH;
         break;
 
     default:
@@ -330,13 +333,14 @@ int xshell_finish()
                 "[!] xshell_finish() failed: invalid state\r\n");
         break;
     }
-    
+
     if (send_xfragment(connection_socket, &finish_frag) == -1)
     {
         fprintf(stderr,
                 "[!] xshell_finish():send_xfragment failed: cannot send finish fragment\r\n");
         return -1;
     }
+    printf("[+] xshell_finish() finish fragment sends successfully\n\r");
     sg_master_fd == -1;
     return 0;
 }
