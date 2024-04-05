@@ -1,8 +1,10 @@
+*
 !*.c
 !*.h
 !*.sh
 !Makefile
 !./
-*
+
 .vscode
 test*
+test.c

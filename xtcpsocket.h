@@ -40,7 +40,7 @@ int xtcpsocket_accept(const xtcpsocket_t *_server_socket, xtcpsocket_t *_client_
 
 /*
     Send exactly _buff_size bytes Data from _buff to _socket
-    any retunr value less than _buff_size indicates an error
+    any return value less than _buff_size indicates an error
     in case of error, error message will print in stderr
  */
 ssize_t xtcpsocket_sendall(const xtcpsocket_t *_socket, const void *_buff, size_t _buff_size);
