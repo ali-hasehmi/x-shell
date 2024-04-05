@@ -26,6 +26,15 @@ int xclient_create(xclient_t *_client, const xtcpsocket_t *_socket, const char *
     return 0;
 }
 
+int xclient_set_localname(xclient_t *_client, const char *_new_local_name)
+{
+    if (strncpy(_client->localname, _new_local_name, LOCALNAME_MAX_LEN) == NULL)
+    {
+        return -1;
+    }
+    return 0;
+}
+
 void xclient_print(const xclient_t *_client)
 {
     printf("%-15hu%-30s%-30s%-30s\n",

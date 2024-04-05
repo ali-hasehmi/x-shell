@@ -17,6 +17,7 @@ typedef struct xclient
 } xclient_t;
 
 int xclient_create(xclient_t *_client, const xtcpsocket_t *_socket, const char *_hostname, const char *_logname);
+int xclient_set_localname(xclient_t * _client, const char *_new_local_name);
 void xclient_print(const xclient_t *_client);
 
 #endif // X_CLIENT_H
