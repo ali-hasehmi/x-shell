@@ -27,7 +27,7 @@ void cleanup()
 
 void print_ascii_art()
 {
-    const char xshell_art[] = 
+    const char *xshell_art = 
         "               _          _ _ \n"
         "__  __     ___| |__   ___| | |\n"
         "\\ \\/ /____/ __| '_ \\ / _ \\ | |\n"
