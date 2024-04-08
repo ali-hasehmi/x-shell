@@ -27,7 +27,7 @@ void cleanup()
 
 void print_ascii_art()
 {
-    const char *xshell_art = 
+    const char *xshell_art =
         "               _          _ _ \n"
         "__  __     ___| |__   ___| | |\n"
         "\\ \\/ /____/ __| '_ \\ / _ \\ | |\n"
@@ -35,6 +35,19 @@ void print_ascii_art()
         "/_/\\_\\    |___/_| |_|\\___|_|_|\n\n";
 
     printf("%s", xshell_art);
+}
+void print_help()
+{
+    const char *xshell_help =
+        "\n  list                                    list all connected clients\n"
+        "  shell <cid>                             try to establish a shell session with client with <cid> id\n"
+        "  download <cid> <CFILE> <SAVELOCATION>   download the CFILE from the client with <cid> id and save it to SAVELOCATION\n"
+        "  upload <cid> <HFILE> <SAVELOCATION>     upload the HFILE from the Host to client with <cid> id and save it to SAVELOCATION\n"
+        "  close <cid>                             close the connection to client with <cid> id\n"
+        "  help                                    show programs options\n"
+        "  exit                                    exit the x-shell\n\n";
+
+    printf("%s", xshell_help);
 }
 void *accept_worker(void *arg)
 {
@@ -105,6 +118,10 @@ int main()
         if (!strcmp(command, "list"))
         {
             xclient_list_print(&list);
+        }
+        else if (!strcmp(command, "help"))
+        {
+            print_help();
         }
     } while (strcmp(command, "exit"));
     isProgramRunning = 0;
