@@ -4,7 +4,7 @@
 #include "xtcpsocket.h"
 
 #define HOSTNAME_MAX_LEN 64
-#define LOGNAME_MAX_LEN 64
+#define LOGNAME_MAX_LEN 32
 #define LOCALNAME_MAX_LEN 64
 
 typedef struct xclient

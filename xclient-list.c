@@ -212,6 +212,7 @@ int xclient_list_remove(xclient_list_t *_list, uint16_t _client_id)
     {
         prevNode->next = currNode->next;
     }
+    xtcpsocket_close(&currNode->data.socket);
     free(currNode);
     free_random_unique_id(_client_id);
     return 0;
@@ -229,6 +230,7 @@ int xclient_list_destroy(xclient_list_t *_list)
     while (curr != NULL)
     {
         next = curr->next;
+        xtcpsocket_close(&curr->data.socket);
         free(curr);
         curr = next;
     }
@@ -237,7 +239,7 @@ int xclient_list_destroy(xclient_list_t *_list)
 
 void xclient_list_print(const xclient_list_t *_list)
 {
-    printf("\n%-15s%-30s%-30s%-30s\n", "#id",
+    printf("\n%-7s%-32s%-30s%-30s\n", "#id",
            "#username",
            "#hostname",
            "#localname");

@@ -7,10 +7,43 @@
 #include "xshell.h"
 #include <errno.h>
 #include <string.h>
+#include "xclient-list.h"
 
 #define LISTEN_PORT 10100
 #define BACKLOG_LIMIT 6
 
+xclient_list_t list;
+int isProgramRunning = 1;
+xtcpsocket_t server_socket;
+
+void cleanup()
+{
+    printf("[~] cleanUp starting...\n");
+    xtcpsocket_close(&server_socket);
+    xclient_list_destroy(&list);
+    xterminal_reset();
+    printf("[+] cleanUp finished.\n");
+}
+
+void *accept_worker(void *arg)
+{
+    xtcpsocket_t *server_socket = (xtcpsocket_t *)arg;
+    xtcpsocket_t client_socket;
+    xclient_t tmp_client;
+    xclient_create(&tmp_client, &client_socket, "null", "null");
+    while (isProgramRunning)
+    {
+        if (xtcpsocket_accept(server_socket, &client_socket) == -1)
+        {
+            fprintf(stderr,
+                    "[!] xtcpsocket_accept() failed\n\r");
+            break;
+        }
+        tmp_client.socket = client_socket;
+        xclient_list_push_back(&list, &tmp_client);
+    }
+    xtcpsocket_close(server_socket);
+}
 int main()
 {
 
@@ -20,14 +53,15 @@ int main()
                 "[!] freopen() faild to open xshell.log: %s\r\n",
                 strerror(errno));
     }
-
+    // Register clean up for exiting
+    atexit(&cleanup);
+    xclient_list_create(&list);
     if (xterminal_init() == -1)
     {
         fprintf(stderr,
                 "[!] xterminal_init() faild to save init terminal state\r\n");
     }
 
-    xtcpsocket_t server_socket;
     if (xtcpsocket_create(&server_socket, AF_INET, xst_server) == -1)
     {
         fprintf(stderr,
@@ -49,57 +83,71 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    xtcpsocket_t client_socket;
-    if (xtcpsocket_accept(&server_socket, &client_socket) == -1)
+    pthread_t p;
+    pthread_create(&p, NULL, &accept_worker, (void *)&server_socket);
+    char command[256];
+    do
     {
-        fprintf(stderr,
-                "[!] xtcpsocket_accept() failed\n\r");
-        exit(EXIT_FAILURE);
-    }
+        printf("> ");
+        scanf("%s", command);
+        if (!strcmp(command, "list"))
+        {
+            xclient_list_print(&list);
+        }
+    } while (strcmp(command, "exit"));
+    isProgramRunning = 0;
+    //pthread_join(p, NULL);
+    // xtcpsocket_t client_socket;
+    // if (xtcpsocket_accept(&server_socket, &client_socket) == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xtcpsocket_accept() failed\n\r");
+    //     exit(EXIT_FAILURE);
+    // }
 
-    // REQUEST A NEW SHELL SESSION
+    // // REQUEST A NEW SHELL SESSION
 
-    if (xterminal_enable_raw_mode() == -1)
-    {
-        fprintf(stderr,
-                "[!] xterminal_enable_raw_mode() failed\n\r");
-        // xterminal_reset();
-        exit(EXIT_FAILURE);
-    }
+    // if (xterminal_enable_raw_mode() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xterminal_enable_raw_mode() failed\n\r");
+    //     // xterminal_reset();
+    //     exit(EXIT_FAILURE);
+    // }
 
-    if (xshell_start(&client_socket, REQUESTER) == -1)
-    {
-        fprintf(stderr,
-                "[!] xshell_start() failed\n\r");
-        // xterminal_reset();
-        exit(EXIT_FAILURE);
-    }
-    fprintf(stderr, "[+] xshell started successfully!\n");
+    // if (xshell_start(&client_socket, REQUESTER) == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_start() failed\n\r");
+    //     // xterminal_reset();
+    //     exit(EXIT_FAILURE);
+    // }
+    // fprintf(stderr, "[+] xshell started successfully!\n");
 
-    if (xshell_wait() == -1)
-    {
-        fprintf(stderr,
-                "[!] xshell_wait() failed\n\r");
-        // xterminal_reset();
-        exit(EXIT_FAILURE);
-    }
-    fprintf(stderr, "[+] xshell session waite finished!\n");
+    // if (xshell_wait() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_wait() failed\n\r");
+    //     // xterminal_reset();
+    //     exit(EXIT_FAILURE);
+    // }
+    // fprintf(stderr, "[+] xshell session waite finished!\n");
 
-    if (xshell_finish() == -1)
-    {
-        fprintf(stderr,
-                "[!] xshell_finish() failed\n\r");
-        // xterminal_reset();
+    // if (xshell_finish() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_finish() failed\n\r");
+    //     // xterminal_reset();
 
-        exit(EXIT_FAILURE);
-    }
-    if (xterminal_disable_raw_mode() == -1)
-    {
-        fprintf(stderr,
-                "[!] xterminal_disable_raw_mode() failed\n\r");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(stderr, "[+] xshell finished succesffuly finished!\n");
-    // xterminal_reset();
+    //     exit(EXIT_FAILURE);
+    // }
+    // if (xterminal_disable_raw_mode() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xterminal_disable_raw_mode() failed\n\r");
+    //     exit(EXIT_FAILURE);
+    // }
+    // fprintf(stderr, "[+] xshell finished succesffuly finished!\n");
+    // // xterminal_reset();
     return 0;
 }

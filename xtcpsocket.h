@@ -81,7 +81,7 @@ int xtcpsocket_gethost(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip_b
 */
 int xtcpsocket_getremote(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip_buff_len, uint16_t *_port_buff);
 
-
+int xtcpsocket_close(const xtcpsocket_t *_socket);
 /*
     send all data in the buffer
     set the acutal Data that sent in _size

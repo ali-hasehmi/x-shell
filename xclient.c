@@ -37,7 +37,7 @@ int xclient_set_localname(xclient_t *_client, const char *_new_local_name)
 
 void xclient_print(const xclient_t *_client)
 {
-    printf("%-15hu%-30s%-30s%-30s\n",
+    printf("%-7hu%-32s%-30s%-30s\n",
            _client->id,
            _client->logname,
            _client->hostname,

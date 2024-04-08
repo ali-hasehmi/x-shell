@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 
 int serialize_ip_port_remote(xtcpsocket_t *_socket, const char *_ip, uint16_t _port)
 {
@@ -373,6 +374,11 @@ int xtcpsocket_getremote(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip
         return -1;
     }
     return 0;
+}
+
+int xtcpsocket_close(const xtcpsocket_t *_socket)
+{
+    return close(_socket->file_descriptor);
 }
 
 int sendall(int _fd, const void *_buff, size_t *_size, int _flag)
