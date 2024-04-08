@@ -249,4 +249,5 @@ void xclient_list_print(const xclient_list_t *_list)
     {
         xclient_print(&currNode->data);
     }
+    putchar('\n');
 }

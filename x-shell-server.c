@@ -25,6 +25,17 @@ void cleanup()
     printf("[+] cleanUp finished.\n");
 }
 
+void print_ascii_art()
+{
+    const char xshell_art[] = 
+        "               _          _ _ \n"
+        "__  __     ___| |__   ___| | |\n"
+        "\\ \\/ /____/ __| '_ \\ / _ \\ | |\n"
+        " >  <_____\\__ \\ | | |  __/ | |\n"
+        "/_/\\_\\    |___/_| |_|\\___|_|_|\n\n";
+
+    printf("%s", xshell_art);
+}
 void *accept_worker(void *arg)
 {
     xtcpsocket_t *server_socket = (xtcpsocket_t *)arg;
@@ -86,6 +97,7 @@ int main()
     pthread_t p;
     pthread_create(&p, NULL, &accept_worker, (void *)&server_socket);
     char command[256];
+    print_ascii_art();
     do
     {
         printf("> ");
@@ -96,14 +108,14 @@ int main()
         }
     } while (strcmp(command, "exit"));
     isProgramRunning = 0;
-    //pthread_join(p, NULL);
-    // xtcpsocket_t client_socket;
-    // if (xtcpsocket_accept(&server_socket, &client_socket) == -1)
-    // {
-    //     fprintf(stderr,
-    //             "[!] xtcpsocket_accept() failed\n\r");
-    //     exit(EXIT_FAILURE);
-    // }
+    // pthread_join(p, NULL);
+    //  xtcpsocket_t client_socket;
+    //  if (xtcpsocket_accept(&server_socket, &client_socket) == -1)
+    //  {
+    //      fprintf(stderr,
+    //              "[!] xtcpsocket_accept() failed\n\r");
+    //      exit(EXIT_FAILURE);
+    //  }
 
     // // REQUEST A NEW SHELL SESSION
 
