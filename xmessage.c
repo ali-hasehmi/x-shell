@@ -38,7 +38,7 @@ int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg)
                 strerro(errno));
         return -1;
     }
-
+    free(_xmsg->xm_d);
     fprintf(stderr, "[+] send_xmessage(): sends %luByte Successfuly!\n",
             MESSAGE_HEADER_SIZE + _xmsg->xm_len);
 
