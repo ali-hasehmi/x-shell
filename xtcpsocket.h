@@ -16,6 +16,7 @@ typedef struct
     int file_descriptor;
     uint16_t address_family;
     xsocktype_t socket_type;
+
     struct sockaddr_storage host_socket_address;
     socklen_t host_socket_address_len;
     struct sockaddr_storage remote_socket_address;
@@ -72,7 +73,6 @@ ssize_t xtcpsocket_recv(const xtcpsocket_t *_socket, void *_buff, size_t _buff_s
     otherwise return 0
 */
 int xtcpsocket_gethost(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip_buff_len, uint16_t *_port_buff);
-
 
 /*
     put peer ip address and peer port in _ip_buff and _port arguments
