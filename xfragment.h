@@ -13,17 +13,23 @@
 
 #define XFBUFF_SIZE 8 * KiB
 
-#define XFLAG_FINIT 0
-#define XFLAG_ACK_FINIT 1
-#define XFLAG_FILE_DATA 2
-#define XFLAG_FFINISH 3
+#define XFMODE_DOWNLOAD 0
+#define XFMODE_UPLOAD 1
 
+
+
+#define XFLAG_FINIT_DOWNLOAD 0
+#define XFLAG_FINIT_UPLOAD 1
+#define XFLAG_ACK_FINIT_SUCCESS 2
+#define XFLAG_ACK_FINIT_FAILURE 3
+#define XFLAG_FILE_DATA 4
+#define XFLAG_FFINISH 5
 
 typedef struct xfragment
 {
     uint16_t buff_len;        /* actual amount of Data in Buffer */
     BYTE f_flag;              /* fragment flags */
-    char f_name[141];         /* File Name */
+    char f_target[141];       /* File Name */
     uint64_t f_size;          /* absolute File Size */
     uint64_t f_offset;        /* File Offset a.k.a how many byte of the file has been read */
     BYTE buffer[XFBUFF_SIZE]; /* Real-Data */
@@ -39,7 +45,7 @@ int send_xfragment(const xtcpsocket_t *_socket, const xfragment_t *_fragment);
 
 int recv_xfragment(const xtcpsocket_t *_socket, xfragment_t *_fragment);
 
-int create_init_xfragment(xfragment_t *_fragment, const xfile_t *_file_name);
+int create_init_xfragment(xfragment_t *_fragment,const char *_target,const xfile_t *_file_name,int _mode);
 
 int create_ack_init_xfragment(xfragment_t *_fragment);
 
@@ -48,13 +54,13 @@ int create_ack_init_xfragment(xfragment_t *_fragment);
     sending initial xfragment
     letting reciever know the file name and size
 */
-int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file);
+int make_fhandshake_d(const xtcpsocket_t *_socket, xfile_t *_file,int *_mode);
 
 /*
     making handshake from Requester in File mode
     sending initial xfragment
     letting reciever know the file name and size
 */
-int make_fhandshake(const xtcpsocket_t *_socket, const xfile_t *_file);
+int make_fhandshake(const xtcpsocket_t *_socket,const char* _target, xfile_t *_file,int _mode);
 
 #endif // XFRAGMENT_H

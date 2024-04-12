@@ -2,6 +2,8 @@
 #include <stdlib.h>
 
 #include "xshell.h"
+#include "xfragment.h"
+#include "xfile.h"
 
 #define SERVER_IP (char *)"127.0.0.1"
 #define SERVER_PORT 10100
@@ -24,31 +26,64 @@ int main()
     printf("[+] connected successfully to server!\n");
 
     xtcpsocket_init_communication(&client_socket);
-    
-    if (xshell_start(&client_socket, RESPONDER) == -1)
+
+    xfile_t file;
+    int mode;
+    if (make_fhandshake_d(&client_socket, &file, &mode) == -1)
     {
         fprintf(stderr,
-                "[!] xshell_start() failed\n\r");
+                "[!] failed to make handshake!\r\n");
         exit(EXIT_FAILURE);
     }
-
-    printf("[+] xshell started successfully!\n");
-
-    if (xshell_wait() == -1)
+    switch (mode)
     {
-        fprintf(stderr,
-                "[!] xshell_wait() failed\n\r");
-        exit(EXIT_FAILURE);
-    }
+    case XFMODE_DOWNLOAD:
+        printf("[+] DOWNLOAD command detected!\n");
+        if (xfile_send(&client_socket, &file) == -1)
+        {
+            fprintf(stderr,
+                    "[!] xfile_send() failed\n\r");
+        }
+        break;
 
-    printf("[+] xshell session waite finished!\n");
-
-    if (xshell_finish() == -1)
-    {
+    case XFMODE_UPLOAD:
+        printf("[+] UPLOAD command detected!\n");
+        if (xfile_recv(&client_socket, &file) == -1)
+        {
+            fprintf(stderr,
+                    "[!] xfile_recv() failed\n\r");
+        }
+        break;
+    default:
         fprintf(stderr,
-                "[!] xshell_finish() failed\n\r");
-        exit(EXIT_FAILURE);
+                "[!] invalid mode\n\r");
+        break;
     }
-    printf("[+] xshell finished succesffuly finished!\n");
+    printf("[+] operation was finished successfully!\n");
+    // if (xshell_start(&client_socket, RESPONDER) == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_start() failed\n\r");
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // printf("[+] xshell started successfully!\n");
+
+    // if (xshell_wait() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_wait() failed\n\r");
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // printf("[+] xshell session waite finished!\n");
+
+    // if (xshell_finish() == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_finish() failed\n\r");
+    //     exit(EXIT_FAILURE);
+    // }
+    // printf("[+] xshell finished succesffuly finished!\n");
     getchar();
 }

