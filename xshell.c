@@ -25,9 +25,9 @@ static bool is_connected = true;
 
 void handle_sigwinch(int signal)
 {
-    //printf("handle_sigwinch called\n");
-    // struct winsize ws;
-    //  Get the new terminal size
+    // printf("handle_sigwinch called\n");
+    //  struct winsize ws;
+    //   Get the new terminal size
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &curr_win_size) == -1)
     {
         perror("[!]handle_sigwinch():ioctl()");
@@ -88,14 +88,14 @@ static void *write_worker(void *arg)
     {
         if (recv_sfragment(connection_socket, &recving_fragment) == -1)
         {
-            printf("[~] write_worker():recv_xfragment() return -1\n");
+            printf("[~] write_worker():recv_sfragment() return -1\n");
             is_connected = false;
             return NULL;
         }
 
         if (memcmp(&recving_fragment.s_ws, &curr_win_size, sizeof(struct winsize)) && (host_state == RESPONDER))
         {
-            fprintf(stderr,"[~] pseudo terminal size changed!\n");
+            fprintf(stderr, "[~] pseudo terminal size changed!\n");
             memcpy(&curr_win_size, &recving_fragment.s_ws, sizeof(struct winsize));
             if (ioctl(sg_master_fd, TIOCSWINSZ, &curr_win_size) == -1)
             {
@@ -104,7 +104,7 @@ static void *write_worker(void *arg)
         }
         if ((recving_fragment.s_flag == XFLAG_SFINISH) || (recving_fragment.s_flag == XFLAG_ACK_SFINISH))
         {
-            fprintf(stderr,"[~] write_worker(): detect finish fragment\n");
+            fprintf(stderr, "[~] write_worker(): detect finish fragment\n");
             is_connected = false;
             return NULL;
         }
@@ -247,7 +247,7 @@ int make_shandshake_d()
         return -1;
     }
 
-    memcpy(&curr_win_size,&init_frag.s_flag,sizeof(struct winsize));
+    memcpy(&curr_win_size, &init_frag.s_flag, sizeof(struct winsize));
     if (xshell_init() == -1)
     {
         snprintf(init_frag.buff, SBUFF_SIZE, "failed to create shell: %s\r\n", strerror(errno));
@@ -370,6 +370,8 @@ int xshell_finish()
     case RESPONDER:
         finish_frag.buff_len = 0;
         finish_frag.s_flag = XFLAG_SFINISH;
+        pthread_cancel(read_thread);
+        pthread_cancel(write_thread);
         break;
 
     default:
