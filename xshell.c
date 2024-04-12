@@ -296,7 +296,7 @@ static int xshell_init()
         // }
 
         // Execute bash shell
-        if (execl("/bin/zsh", "/bin/zsh", NULL) == -1)
+        if (execl("/bin/bash", "/bin/bash", NULL) == -1)
         {
             // execve("/bin/bash", arg, NULL);
             perror("[!] execl"); // This line will execute only if execl fails

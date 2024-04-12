@@ -19,5 +19,5 @@ server side:
 client side:
 
 `
-    gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c lpthread
+    gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c -lpthread
 `
