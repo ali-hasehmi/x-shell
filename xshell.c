@@ -362,7 +362,8 @@ int xshell_finish()
     switch (host_state)
     {
     case REQUESTER:
-        // Do something Later
+        pthread_cancel(read_thread);
+        pthread_cancel(write_thread);
         return 0;
         break;
 
