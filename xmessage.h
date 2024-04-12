@@ -9,6 +9,7 @@ struct xtcpsocket ;
 
 #define XMESSAGE_FILE 0
 #define XMESSAGE_SHELL 1
+#define XMESSAGE_REQ 2
 
 typedef uint16_t xmflag_t;
 

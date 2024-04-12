@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "xclient-list.h"
+#include "xrequest.h"
 
 #define LISTEN_PORT 10100
 #define BACKLOG_LIMIT 6
@@ -44,7 +45,7 @@ void print_progress_bar(double _progress)
         }
     }
     putchar(']');
-    printf(" %.2f %%",_progress * 100);
+    printf(" %.2f %%", _progress * 100);
     putchar('\r');
     fflush(stdout);
 }
@@ -89,7 +90,8 @@ void *accept_worker(void *arg)
     xtcpsocket_t *server_socket = (xtcpsocket_t *)arg;
     xtcpsocket_t client_socket;
     xclient_t tmp_client;
-    xclient_create(&tmp_client, &client_socket, "null", "null");
+    xrequest_t req;
+    xclient_create(&tmp_client, NULL, "null", "null");
     while (isProgramRunning)
     {
         if (xtcpsocket_accept(server_socket, &client_socket) == -1)
@@ -100,6 +102,13 @@ void *accept_worker(void *arg)
         }
         tmp_client.socket = client_socket;
         xtcpsocket_init_communication(&tmp_client.socket);
+        xrequest_recv(&tmp_client.socket, &req);
+        if (req.xr_flag == XRFLAG_INIT)
+        {
+            xclient_create(&tmp_client, NULL, req.xr_hostname, req.xr_logname);
+            req.xr_flag = XRFlAG_ACK_INIT;
+            xrequest_send(&tmp_client.socket, &req);
+        }
         xclient_list_push_back(&list, &tmp_client);
     }
     xtcpsocket_close(server_socket);
@@ -229,7 +238,7 @@ int exec_upload_command()
         printf("[!] an error occured\r\n");
         return -1;
     }
-    pthread_join(p,NULL);
+    pthread_join(p, NULL);
 }
 int main()
 {

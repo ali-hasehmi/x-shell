@@ -30,7 +30,10 @@
 */
 int xclient_create(xclient_t *_client, const xtcpsocket_t *_socket, const char *_hostname, const char *_logname)
 {
+    if (_socket != NULL)
+    {
     _client->socket = *_socket;
+    }
     _client->id = 0; // means, the client hasn't any id yet
     if (strncpy(_client->hostname, _hostname, HOSTNAME_MAX_LEN) == NULL)
     {
