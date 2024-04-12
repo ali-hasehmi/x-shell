@@ -154,6 +154,7 @@ int recv_xfragment(const xtcpsocket_t *_socket, xfragment_t *_fragment)
         return -1;
     }
     memcpy(_fragment, msg.xm_d, msg.xm_len);
+    free(msg.xm_d);
     // // send everything except buffer data
     // if (xtcpsocket_recvall(_socket,
     //                        _fragment,
