@@ -131,12 +131,12 @@ int exec_shell_command()
 int main()
 {
 
-    // if (freopen("./xshell.log", "w", stderr) == NULL)
-    // {
-    //     fprintf(stderr,
-    //             "[!] freopen() faild to open xshell.log: %s\r\n",
-    //             strerror(errno));
-    // }
+    if (freopen("./xshell.log", "w", stderr) == NULL)
+    {
+        fprintf(stderr,
+                "[!] freopen() faild to open xshell.log: %s\r\n",
+                strerror(errno));
+    }
     // Register clean up for exiting
     atexit(&cleanup);
     xclient_list_create(&list);
