@@ -3,26 +3,26 @@
 #include <string.h>
 #include "xmessage_queue.h"
 
-void *recv_msg_worker(void *arg)
-{
-    xclient_t *currClient = arg;
-    while (1)
-    {
-        xmessage_t *tmp_msg;
-        xmessage_recv(&currClient->socket, tmp_msg);
-        xmessage_queue_enqueue(&recv_xmsg_queue, tmp_msg); // what if queue was full?
-    }
-}
+// void *recv_msg_worker(void *arg)
+// {
+//     xclient_t *currClient = arg;
+//     while (1)
+//     {
+//         xmessage_t *tmp_msg;
+//         xmessage_recv(&currClient->socket, tmp_msg);
+//         xmessage_queue_enqueue(&recv_xmsg_queue, tmp_msg); // what if queue was full?
+//     }
+// }
 
-void *send_msg_worker(void *arg)
-{
-    xclient_t *currClient = arg;
-    while (1)
-    {
-        int res = xmessage_queue_dequeue(&send_xmsg_queue,&tmp_msg); // what if queue was empty?
-        xmessage_send(&currClient->socket, &tmp_msg);
-    }
-}
+// void *send_msg_worker(void *arg)
+// {
+//     xclient_t *currClient = arg;
+//     while (1)
+//     {
+//         int res = xmessage_queue_dequeue(&send_xmsg_queue,&tmp_msg); // what if queue was empty?
+//         xmessage_send(&currClient->socket, &tmp_msg);
+//     }
+// }
 /*
     filled _client fields with given arugments
     return 0 on success

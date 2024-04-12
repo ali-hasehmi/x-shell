@@ -7,6 +7,9 @@
 
 #define MESSAGE_HEADER_SIZE (sizeof(uint32_t) + sizeof(xmflag_t))
 
+#define XMESSAGE_FILE 0
+#define XMESSAGE_SHELL 1
+
 typedef uint16_t xmflag_t;
 
 typedef struct xmessage

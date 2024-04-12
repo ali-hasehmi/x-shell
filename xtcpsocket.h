@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
+#include "xmessage_queue.h"
+
 typedef enum
 {
     xst_server,
@@ -16,7 +18,9 @@ typedef struct
     int file_descriptor;
     uint16_t address_family;
     xsocktype_t socket_type;
-
+    xmessage_queue_t *outgoing_message_queue;
+    xmessage_queue_t *incoming_message_queue;
+    pthread_t *communication_threads;
     struct sockaddr_storage host_socket_address;
     socklen_t host_socket_address_len;
     struct sockaddr_storage remote_socket_address;
@@ -38,6 +42,8 @@ int xtcpsocket_bind(xtcpsocket_t *_socket, const char *_host_ip, uint16_t _host_
 int xtcpsocket_listen(xtcpsocket_t *_socket, int _back_log);
 
 int xtcpsocket_accept(const xtcpsocket_t *_server_socket, xtcpsocket_t *_client_socket);
+
+int xtcpsocket_init_communication(xtcpsocket_t *_socket);
 
 /*
     Send exactly _buff_size bytes Data from _buff to _socket

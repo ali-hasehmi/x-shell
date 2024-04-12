@@ -1,5 +1,6 @@
 #include "xfragment.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -115,21 +116,28 @@ int printxfragment(const xfragment_t *_fragment)
 
 int send_xfragment(const xtcpsocket_t *_socket, const xfragment_t *_fragment)
 {
-    // send everything except buffer data
-    if (xtcpsocket_sendall(_socket,
-                           _fragment,
-                           sizeof(xfragment_t) - XFBUFF_SIZE) != sizeof(xfragment_t) - XFBUFF_SIZE)
-    {
-        return -1;
-    }
+    xmessage_t msg;
+    msg.xm_f = XMESSAGE_FILE;
+    msg.xm_len = sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len;
+    msg.xm_d = malloc(sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len);
+    memcpy(msg.xm_d, _fragment, msg.xm_len);
 
-    // send buffer data
-    if (xtcpsocket_sendall(_socket,
-                           _fragment->buffer,
-                           _fragment->buff_len) != _fragment->buff_len)
-    {
-        return -1;
-    }
+    xmessage_queue_enqueue(_socket->outgoing_message_queue, &msg);
+    // send everything except buffer data
+    // if (xtcpsocket_sendall(_socket,
+    //                        _fragment,
+    //                        sizeof(xfragment_t) - XFBUFF_SIZE) != sizeof(xfragment_t) - XFBUFF_SIZE)
+    // {
+    //     return -1;
+    // }
+
+    // // send buffer data
+    // if (xtcpsocket_sendall(_socket,
+    //                        _fragment->buffer,
+    //                        _fragment->buff_len) != _fragment->buff_len)
+    // {
+    //     return -1;
+    // }
 
     fprintf(stderr, "[+] send_xfragment(): %luB sent!\n",
             sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len);
@@ -139,21 +147,28 @@ int send_xfragment(const xtcpsocket_t *_socket, const xfragment_t *_fragment)
 
 int recv_xfragment(const xtcpsocket_t *_socket, xfragment_t *_fragment)
 {
-    // send everything except buffer data
-    if (xtcpsocket_recvall(_socket,
-                           _fragment,
-                           sizeof(xfragment_t) - XFBUFF_SIZE) != sizeof(xfragment_t) - XFBUFF_SIZE)
+    xmessage_t msg;
+    xmessage_queue_dequeue(_socket->incoming_message_queue, &msg);
+    if (msg.xm_f != XMESSAGE_FILE)
     {
         return -1;
     }
+    memcpy(_fragment, msg.xm_d, msg.xm_len);
+    // // send everything except buffer data
+    // if (xtcpsocket_recvall(_socket,
+    //                        _fragment,
+    //                        sizeof(xfragment_t) - XFBUFF_SIZE) != sizeof(xfragment_t) - XFBUFF_SIZE)
+    // {
+    //     return -1;
+    // }
 
-    // recv buffer data
-    if (xtcpsocket_recvall(_socket,
-                           &_fragment->buffer,
-                           _fragment->buff_len) != _fragment->buff_len)
-    {
-        return -1;
-    }
+    // // recv buffer data
+    // if (xtcpsocket_recvall(_socket,
+    //                        &_fragment->buffer,
+    //                        _fragment->buff_len) != _fragment->buff_len)
+    // {
+    //     return -1;
+    // }
 
     fprintf(stderr, "[+] recv_xfragment(): %luB recieved!\n",
             sizeof(xfragment_t) - XFBUFF_SIZE + _fragment->buff_len);

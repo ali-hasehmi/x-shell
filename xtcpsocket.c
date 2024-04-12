@@ -4,9 +4,34 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
 
+void *recv_msg_worker(void *arg)
+{
+    xtcpsocket_t *currSocket = arg;
+    while (1)
+    {
+        xmessage_t tmp_msg;
+        if (xmessage_recv(currSocket, &tmp_msg))
+        {
+            return NULL;
+        }
+        xmessage_queue_enqueue(currSocket->incoming_message_queue, &tmp_msg); // what if queue was full?
+    }
+}
+
+void *send_msg_worker(void *arg)
+{
+    xtcpsocket_t *currSocket = arg;
+    while (1)
+    {
+        xmessage_t tmp_msg;
+        int res = xmessage_queue_dequeue(currSocket->outgoing_message_queue, &tmp_msg); // what if queue was empty?
+        xmessage_send(currSocket, &tmp_msg);
+    }
+}
 int serialize_ip_port_remote(xtcpsocket_t *_socket, const char *_ip, uint16_t _port)
 {
 
@@ -141,6 +166,7 @@ int serialize_ip_port_host(xtcpsocket_t *_socket, const char *_ip, uint16_t _por
 
 int xtcpsocket_create(xtcpsocket_t *_socket, int _address_family, xsocktype_t _socket_type)
 {
+
     _socket->address_family = _address_family;
     _socket->socket_type = _socket_type;
     if ((_socket->file_descriptor = socket(_address_family, SOCK_STREAM, 0)) == -1)
@@ -255,6 +281,61 @@ int xtcpsocket_accept(const xtcpsocket_t *_server_socket, xtcpsocket_t *_client_
     }
 
     return 0;
+}
+
+int xtcpsocket_init_communication(xtcpsocket_t *_socket)
+{
+    // allocating memory for incoming and outgoing message queues
+    _socket->incoming_message_queue = malloc(sizeof(xmessage_queue_t));
+    if (_socket->incoming_message_queue == NULL)
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():malloc() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
+
+    _socket->outgoing_message_queue = malloc(sizeof(xmessage_queue_t));
+    if (_socket->outgoing_message_queue == NULL)
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():malloc() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
+
+    // creating queues for incoming and outgoing messages
+    if (xmessage_queue_create(_socket->incoming_message_queue))
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():xmessage_queue_create() failed\r\n");
+        return -1;
+    }
+    if (xmessage_queue_create(_socket->outgoing_message_queue))
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():xmessage_queue_create() failed\r\n");
+        return -1;
+    }
+
+    // allocate memory for threads
+    _socket->communication_threads = malloc(2 * sizeof(pthread_t));
+    if (pthread_create(&_socket->communication_threads[0],
+                       NULL,
+                       &recv_msg_worker,
+                       (void *)_socket))
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():pthread_create() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
+    if (pthread_create(&_socket->communication_threads[1],
+                       NULL,
+                       &send_msg_worker,
+                       (void *)_socket))
+    {
+        fprintf(stderr,
+                "[!] xtcpsocket_create():pthread_create() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
 }
 
 ssize_t xtcpsocket_sendall(const xtcpsocket_t *_socket, const void *_buff, size_t _buff_size)
@@ -378,7 +459,25 @@ int xtcpsocket_getremote(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip
 
 int xtcpsocket_close(const xtcpsocket_t *_socket)
 {
-    return close(_socket->file_descriptor);
+    pthread_cancel(_socket->communication_threads[0]);
+    pthread_cancel(_socket->communication_threads[1]);
+    free(_socket->communication_threads);
+    if (xmessage_queue_destroy(_socket->incoming_message_queue))
+    {
+        return -1;
+    }
+    if (xmessage_queue_destroy(_socket->outgoing_message_queue))
+    {
+        return -1;
+    }
+    free(_socket->incoming_message_queue);
+    free(_socket->outgoing_message_queue);
+    if (close(_socket->file_descriptor))
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
 int sendall(int _fd, const void *_buff, size_t *_size, int _flag)
