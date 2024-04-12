@@ -80,7 +80,7 @@ int xmessage_queue_enqueue(xmessage_queue_t *_queue, xmessage_t *_msg)
     {
         // wait for queue to have more space
         // but for now just return -1 and print the queue is full
-        printf("Queue is Full! waiting to have space\n");
+        fprintf(stderr,"Queue is Full! waiting to have space\n");
         pthread_cond_wait(&_queue->not_full, &_queue->queue_mutex);
         // return -1;
     }
@@ -110,7 +110,7 @@ int xmessage_queue_dequeue(xmessage_queue_t *_queue, xmessage_t *_msg)
     {
         // wait to have data in queue to return
         // but for now just return -1 and print in terminal
-        printf("Queue is Empty! waiting to enqueue something...\n");
+        fprintf(stderr,"Queue is Empty! waiting to enqueue something...\n");
         pthread_cond_wait(&_queue->not_empty, &_queue->queue_mutex);
         // return -1;
     }

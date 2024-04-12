@@ -189,6 +189,7 @@ int main()
         }
         else if(!strcmp(command,"clear")){
             system("clear || cls");
+            print_ascii_art();
         }
     } while (strcmp(command, "exit"));
     isProgramRunning = 0;

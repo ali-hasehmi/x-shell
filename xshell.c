@@ -25,6 +25,7 @@ static bool is_connected = true;
 
 void handle_sigwinch(int signal)
 {
+    //printf("handle_sigwinch called\n");
     // struct winsize ws;
     //  Get the new terminal size
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &curr_win_size) == -1)
@@ -94,7 +95,8 @@ static void *write_worker(void *arg)
 
         if (memcmp(&recving_fragment.s_ws, &curr_win_size, sizeof(struct winsize)) && (host_state == RESPONDER))
         {
-            memcpy(&recving_fragment.s_ws, &curr_win_size, sizeof(struct winsize));
+            fprintf(stderr,"[~] pseudo terminal size changed!\n");
+            memcpy(&curr_win_size, &recving_fragment.s_ws, sizeof(struct winsize));
             if (ioctl(sg_master_fd, TIOCSWINSZ, &curr_win_size) == -1)
             {
                 perror("ioctl(TIOCSWINSZ)");
@@ -102,7 +104,7 @@ static void *write_worker(void *arg)
         }
         if ((recving_fragment.s_flag == XFLAG_SFINISH) || (recving_fragment.s_flag == XFLAG_ACK_SFINISH))
         {
-            printf("[~] write_worker(): detect finish fragment\n");
+            fprintf(stderr,"[~] write_worker(): detect finish fragment\n");
             is_connected = false;
             return NULL;
         }
@@ -186,7 +188,7 @@ int make_shandshake()
     if (sigaction(SIGWINCH, &sa, NULL) == -1)
     {
         perror("sigaction");
-        //exit(EXIT_FAILURE);
+        // exit(EXIT_FAILURE);
     }
 
     sfragment_t init_frag;
