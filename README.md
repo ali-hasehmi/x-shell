@@ -13,11 +13,11 @@ Upload files from the target machine to the attacker machine.
 server side:
 
 `
-    gcc -o x-shell-server x-shell-server.c xtcpsocket.c xterminal.c xclient-list.c xclient.c xshell.c xmessage_queue.c xmessage.c sfragment.c xfile.c xfragment.c xrequest.c -lm
+    gcc -o x-shell-server x-shell-server.c xtcpsocket.c xterminal.c xclient-list.c xclient.c xshell.c xmessage_queue.c xmessage.c sfragment.c xfile.c xfragment.c xrequest.c -lm -lpthread -lutil
 `
 
 client side:
 
 `
-    gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c
+    gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c lpthread
 `
