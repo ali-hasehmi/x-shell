@@ -8,3 +8,16 @@ x-shell is a simple Linux reverse shell program written in C. It allows a user t
 Upload files from the target machine to the attacker machine.
 - Simple and lightweight implementation.
 
+## How To Compile
+
+server side:
+
+`
+    gcc -o x-shell-server x-shell-server.c xtcpsocket.c xterminal.c xclient-list.c xclient.c xshell.c xmessage_queue.c xmessage.c sfragment.c xfile.c xfragment.c xrequest.c -lm
+`
+
+client side:
+
+`
+    gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c
+`
