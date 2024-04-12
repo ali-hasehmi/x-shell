@@ -7,11 +7,13 @@
 #include "xshell.h"
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 #include "xclient-list.h"
 
 #define LISTEN_PORT 10100
 #define BACKLOG_LIMIT 6
 
+#define PROGRESS_BAR_SIZE 25
 xclient_list_t list;
 int isProgramRunning = 1;
 xtcpsocket_t server_socket;
@@ -25,6 +27,38 @@ void cleanup()
     printf("[+] cleanUp finished.\n");
 }
 
+void print_progress_bar(double _progress)
+{
+    int numofhash = _progress * PROGRESS_BAR_SIZE;
+    putchar('[');
+    for (int i = 0; i < PROGRESS_BAR_SIZE; ++i)
+    {
+        if (numofhash > 0)
+        {
+            putchar('#');
+            numofhash--;
+        }
+        else
+        {
+            putchar(' ');
+        }
+    }
+    putchar(']');
+    printf(" %.2f %%",_progress * 100);
+    putchar('\r');
+    fflush(stdout);
+}
+
+void *progress_worker(void *arg)
+{
+    xfile_t *f = arg;
+    do
+    {
+        usleep(1000);
+        print_progress_bar((double)f->x_rel_size / (double)f->x_size);
+    } while (f->x_rel_size < f->x_size);
+    putchar('\n');
+}
 void print_ascii_art()
 {
     const char *xshell_art =
@@ -153,11 +187,14 @@ int exec_download_command()
         printf("[!] failed to handshake\r\n");
         return -1;
     }
+    pthread_t p;
+    pthread_create(&p, NULL, &progress_worker, &file);
     if (xfile_recv(&target_client->socket, &file) == -1)
     {
         printf("[!] an error occured\r\n");
         return -1;
     }
+    pthread_join(p, NULL);
     return 0;
 }
 int exec_upload_command()
@@ -185,21 +222,24 @@ int exec_upload_command()
         printf("[!] failed to handshake\r\n");
         return -1;
     }
+    pthread_t p;
+    pthread_create(&p, NULL, &progress_worker, &file);
     if (xfile_send(&target_client->socket, &file) == -1)
     {
         printf("[!] an error occured\r\n");
         return -1;
     }
+    pthread_join(p,NULL);
 }
 int main()
 {
 
-    // if (freopen("./xshell.log", "w", stderr) == NULL)
-    // {
-    //     fprintf(stderr,
-    //             "[!] freopen() faild to open xshell.log: %s\r\n",
-    //             strerror(errno));
-    // }
+    if (freopen("./xshell.log", "w", stderr) == NULL)
+    {
+        fprintf(stderr,
+                "[!] freopen() faild to open xshell.log: %s\r\n",
+                strerror(errno));
+    }
     // Register clean up for exiting
     atexit(&cleanup);
     xclient_list_create(&list);
