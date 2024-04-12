@@ -247,7 +247,8 @@ int make_shandshake_d()
         return -1;
     }
 
-    if (xshell_init(&init_frag.s_ws) == -1)
+    memcpy(&curr_win_size,&init_frag.s_flag,sizeof(struct winsize));
+    if (xshell_init() == -1)
     {
         snprintf(init_frag.buff, SBUFF_SIZE, "failed to create shell: %s\r\n", strerror(errno));
         init_frag.buff_len = strlen(init_frag.buff) + 1;
@@ -271,10 +272,10 @@ int make_shandshake_d()
     return 0;
 }
 
-static int xshell_init(const struct winsize *_ws)
+static int xshell_init()
 {
     int pid;
-    if ((pid = forkpty(&sg_master_fd, NULL, NULL, _ws)) == -1)
+    if ((pid = forkpty(&sg_master_fd, NULL, NULL, &curr_win_size)) == -1)
     {
         fprintf(stderr, "[!] xshell_init():forkpty() failed: %s\r\n",
                 strerror(errno));

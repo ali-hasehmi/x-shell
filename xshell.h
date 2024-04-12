@@ -22,7 +22,7 @@ int make_shandshake();
 */
 int make_shandshake_d();
 
-static int xshell_init(const struct winsize *_ws);
+static int xshell_init();
 
 
 /*
