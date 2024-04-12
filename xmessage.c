@@ -1,5 +1,5 @@
 #include "xmessage.h"
-
+#include "xtcpsocket.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +10,7 @@
     return 0 on success
     return -1 on failure
 */
-int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg)
+int xmessage_send(const struct xtcpsocket *_socket, const xmessage_t *_xmsg)
 {
 
     /*
@@ -22,7 +22,7 @@ int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg)
     {
         fprintf(stderr,
                 "[!] send_xmessage():xtcpsocket_sendall() failed: %s\r\n",
-                strerro(errno));
+                strerror(errno));
         return -1;
     }
 
@@ -35,7 +35,7 @@ int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg)
     {
         fprintf(stderr,
                 "[!] send_xmessage():xtcpsocket_sendall() failed: %s\r\n",
-                strerro(errno));
+                strerror(errno));
         return -1;
     }
     free(_xmsg->xm_d);
@@ -50,7 +50,7 @@ int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg)
     return 0 on success
     return -1 on failure
 */
-int xmessage_recv(const xtcpsocket_t *_socket, xmessage_t *_xmsg)
+int xmessage_recv(const struct xtcpsocket *_socket, xmessage_t *_xmsg)
 {
     /*
         receive message len and flags
@@ -61,7 +61,7 @@ int xmessage_recv(const xtcpsocket_t *_socket, xmessage_t *_xmsg)
     {
         fprintf(stderr,
                 "[!] send_xmessage():xtcpsocket_sendall() failed: %s\r\n",
-                strerro(errno));
+                strerror(errno));
         return -1;
     }
 
@@ -85,7 +85,7 @@ int xmessage_recv(const xtcpsocket_t *_socket, xmessage_t *_xmsg)
     {
         fprintf(stderr,
                 "[!] send_xmessage():xtcpsocket_sendall() failed: %s\r\n",
-                strerro(errno));
+                strerror(errno));
         return -1;
     }
 

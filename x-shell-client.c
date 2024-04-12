@@ -23,6 +23,8 @@ int main()
     }
     printf("[+] connected successfully to server!\n");
 
+    xtcpsocket_init_communication(&client_socket);
+    
     if (xshell_start(&client_socket, RESPONDER) == -1)
     {
         fprintf(stderr,

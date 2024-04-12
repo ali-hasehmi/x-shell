@@ -175,7 +175,7 @@ xclient_t *xclient_list_find(xclient_list_t *_list, uint16_t _client_id)
     {
         if (curr->data.id == _client_id)
         {
-            return &curr->data;
+            return &(curr->data);
         }
     }
     return NULL;

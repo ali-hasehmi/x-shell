@@ -17,12 +17,7 @@
 #define XFLAG_ACK_FINIT 1
 #define XFLAG_FILE_DATA 2
 #define XFLAG_FFINISH 3
-#define XFLAG_SINIT 4
-#define XFLAG_ACK_SINIT_SUCCESS 5
-#define XFLAG_ACK_SINIT_FAILURE 6
-#define XFLAG_SHELL_DATA 7
-#define XFLAG_SFINISH 8
-#define XFLAG_ACK_SFINISH 9
+
 
 typedef struct xfragment
 {

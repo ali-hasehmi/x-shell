@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "xtcpsocket.h"
+struct xtcpsocket ;
 
 #define MESSAGE_HEADER_SIZE (sizeof(uint32_t) + sizeof(xmflag_t))
 
@@ -19,8 +19,8 @@ typedef struct xmessage
     void *xm_d;      /* message actual Data*/
 } xmessage_t;
 
-int xmessage_send(const xtcpsocket_t *_socket, const xmessage_t *_xmsg);
+int xmessage_send(const struct xtcpsocket *_socket, const xmessage_t *_xmsg);
 
-int xmessage_recv(const xtcpsocket_t *_socket, xmessage_t *_xmsg);
+int xmessage_recv(const struct xtcpsocket *_socket, xmessage_t *_xmsg);
 
 #endif // _X_MESSAGE_H

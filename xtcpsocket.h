@@ -12,7 +12,7 @@ typedef enum
     xst_client
 } xsocktype_t;
 
-typedef struct
+typedef struct xtcpsocket
 {
 
     int file_descriptor;

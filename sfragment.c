@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-int sfragment_send(const sfragment_t *_fragment, xtcpsocket_t *_socket)
+int send_sfragment(xtcpsocket_t *_socket,const sfragment_t *_fragment)
 {
     xmessage_t msg;
     msg.xm_f = XMESSAGE_SHELL;
-    msg.xm_len = 2 * sizeof(uint16_t) + sizeof(struct winsize) + _fragment->size;
+    msg.xm_len = 2 * sizeof(uint16_t) + sizeof(struct winsize) + _fragment->buff_len;
     msg.xm_d = malloc(msg.xm_len);
     if (msg.xm_d == NULL)
     {
@@ -18,7 +18,7 @@ int sfragment_send(const sfragment_t *_fragment, xtcpsocket_t *_socket)
     return 0;
 }
 
-int sfragment_recv(const sfragment_t *_fragment, xtcpsocket_t *_socket)
+int recv_sfragment( xtcpsocket_t *_socket, sfragment_t *_fragment)
 {
     xmessage_t msg;
     xmessage_queue_dequeue(_socket->incoming_message_queue, &msg);

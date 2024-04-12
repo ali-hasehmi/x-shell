@@ -166,7 +166,9 @@ int serialize_ip_port_host(xtcpsocket_t *_socket, const char *_ip, uint16_t _por
 
 int xtcpsocket_create(xtcpsocket_t *_socket, int _address_family, xsocktype_t _socket_type)
 {
-
+    _socket->communication_threads = NULL;
+    _socket->incoming_message_queue = NULL;
+    _socket->outgoing_message_queue = NULL;
     _socket->address_family = _address_family;
     _socket->socket_type = _socket_type;
     if ((_socket->file_descriptor = socket(_address_family, SOCK_STREAM, 0)) == -1)
@@ -459,19 +461,29 @@ int xtcpsocket_getremote(const xtcpsocket_t *_socket, char *_ip_buff, size_t _ip
 
 int xtcpsocket_close(const xtcpsocket_t *_socket)
 {
-    pthread_cancel(_socket->communication_threads[0]);
-    pthread_cancel(_socket->communication_threads[1]);
-    free(_socket->communication_threads);
-    if (xmessage_queue_destroy(_socket->incoming_message_queue))
+    if (_socket->communication_threads)
     {
-        return -1;
+        pthread_cancel(_socket->communication_threads[0]);
+        pthread_cancel(_socket->communication_threads[1]);
+        free(_socket->communication_threads);
     }
-    if (xmessage_queue_destroy(_socket->outgoing_message_queue))
+    if (_socket->incoming_message_queue)
     {
-        return -1;
+        if (xmessage_queue_destroy(_socket->incoming_message_queue))
+        {
+            return -1;
+        }
+        free(_socket->incoming_message_queue);
     }
-    free(_socket->incoming_message_queue);
-    free(_socket->outgoing_message_queue);
+    if (_socket->outgoing_message_queue)
+    {
+
+        if (xmessage_queue_destroy(_socket->outgoing_message_queue))
+        {
+            return -1;
+        }
+        free(_socket->outgoing_message_queue);
+    }
     if (close(_socket->file_descriptor))
     {
         return -1;

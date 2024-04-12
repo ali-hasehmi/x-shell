@@ -1,7 +1,7 @@
 #ifndef X_SHELL_H
 #define X_SHELL_H
 
-#include "xfragment.h"
+#include "sfragment.h"
 
 typedef enum
 {
@@ -22,7 +22,7 @@ int make_shandshake();
 */
 int make_shandshake_d();
 
-static int xshell_init();
+static int xshell_init(const struct winsize *_ws);
 
 
 /*

@@ -9,16 +9,30 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <signal.h>
 
 static int sg_master_fd = -1; /*INITIAL VALUE,
  if this value didn't change it means this code is running on requesting side*/
 static xs_state_t host_state;
 static pthread_t read_thread;
 static pthread_t write_thread;
+static struct winsize curr_win_size;
 static xtcpsocket_t *connection_socket;
-static xfragment_t sending_fragment;
-static xfragment_t recving_fragment;
+static sfragment_t sending_fragment;
+static sfragment_t recving_fragment;
 static bool is_connected = true;
+
+void handle_sigwinch(int signal)
+{
+    // struct winsize ws;
+    //  Get the new terminal size
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &curr_win_size) == -1)
+    {
+        perror("[!]handle_sigwinch():ioctl()");
+    }
+    // printf("Terminal resized: rows=%d, cols=%d\n", ws.ws_row, ws.ws_col);
+}
 
 static int writeall(int _fd, const void *_buff, uint16_t *_buff_len)
 {
@@ -71,21 +85,29 @@ static void *write_worker(void *arg)
 
     while (is_connected)
     {
-        if (recv_xfragment(connection_socket, &recving_fragment) == -1)
+        if (recv_sfragment(connection_socket, &recving_fragment) == -1)
         {
             printf("[~] write_worker():recv_xfragment() return -1\n");
             is_connected = false;
             return NULL;
         }
 
-        if ((recving_fragment.f_flag == XFLAG_SFINISH) || (recving_fragment.f_flag == XFLAG_ACK_SFINISH))
+        if (memcmp(&recving_fragment.s_ws, &curr_win_size, sizeof(struct winsize)) && (host_state == RESPONDER))
+        {
+            memcpy(&recving_fragment.s_ws, &curr_win_size, sizeof(struct winsize));
+            if (ioctl(sg_master_fd, TIOCSWINSZ, &curr_win_size) == -1)
+            {
+                perror("ioctl(TIOCSWINSZ)");
+            }
+        }
+        if ((recving_fragment.s_flag == XFLAG_SFINISH) || (recving_fragment.s_flag == XFLAG_ACK_SFINISH))
         {
             printf("[~] write_worker(): detect finish fragment\n");
             is_connected = false;
             return NULL;
         }
 
-        if (writeall(tmp_fd, recving_fragment.buffer, &(recving_fragment.buff_len)) == -1)
+        if (writeall(tmp_fd, recving_fragment.buff, &(recving_fragment.buff_len)) == -1)
         {
             printf("[~] write_worker(): writeall() return -1\n");
             is_connected = false;
@@ -98,7 +120,7 @@ static void *write_worker(void *arg)
 static void *read_worker(void *arg)
 {
 
-    sending_fragment.f_flag = XFLAG_SHELL_DATA;
+    sending_fragment.s_flag = XFLAG_SHELL_DATA;
     /*
             Check For Host state
     */
@@ -130,8 +152,8 @@ static void *read_worker(void *arg)
     {
         ssize_t n;
         if ((n = read(tmp_fd,
-                      sending_fragment.buffer,
-                      XFBUFF_SIZE)) == -1)
+                      sending_fragment.buff,
+                      SBUFF_SIZE)) == -1)
         {
             fprintf(stderr,
                     "[~] read_worker():read() failed: %s\r\n",
@@ -140,9 +162,10 @@ static void *read_worker(void *arg)
             return NULL;
         }
         sending_fragment.buff_len = n;
+        memcpy(&sending_fragment.s_ws, &curr_win_size, sizeof(struct winsize));
         // printf("[~] read_worker():read(): %huB read!\n\r", sending_fragment.buff_len);
 
-        if (send_xfragment(connection_socket, &sending_fragment) == -1)
+        if (send_sfragment(connection_socket, &sending_fragment) == -1)
         {
             fprintf(stderr,
                     "[~] read_worker():send_xfragment() failed: %s\r\n",
@@ -155,31 +178,48 @@ static void *read_worker(void *arg)
 
 int make_shandshake()
 {
-    xfragment_t init_frag;
+    struct sigaction sa;
+    sa.sa_handler = handle_sigwinch;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    // Install signal handler for SIGWINCH
+    if (sigaction(SIGWINCH, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        //exit(EXIT_FAILURE);
+    }
+
+    sfragment_t init_frag;
     init_frag.buff_len = 0;
-    init_frag.f_flag = XFLAG_SINIT;
-    init_frag.f_offset = 0;
-    init_frag.f_size = 0;
-    if (send_xfragment(connection_socket, &init_frag) == -1)
+    init_frag.s_flag = XFLAG_SINIT;
+    // Get window size
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &curr_win_size) == -1)
+    {
+        fprintf(stderr,
+                "[!] make_shandshake(): ioctl() failed: %s\r\n", strerror(errno));
+        return -1;
+    }
+    memcpy(&init_frag.s_ws, &curr_win_size, sizeof(struct winsize));
+    if (send_sfragment(connection_socket, &init_frag) == -1)
     {
         fprintf(stderr,
                 "[!] make_shandshake() failed: could not send initital fragment\r\n");
         return -1;
     }
-    if (recv_xfragment(connection_socket, &init_frag) == -1)
+    if (recv_sfragment(connection_socket, &init_frag) == -1)
     {
         fprintf(stderr,
                 "[!] make_shandshake() failed: could not receive initital Ack fragment\r\n");
         return -1;
     }
-    if (init_frag.f_flag == XFLAG_ACK_SINIT_FAILURE)
+    if (init_frag.s_flag == XFLAG_ACK_SINIT_FAILURE)
     {
         fprintf(stderr,
                 "[!] make_xhandshake() failed: peer failed to create a new shell session\n\rerr: %s\r\n",
-                init_frag.buffer);
+                init_frag.buff);
         return -1;
     }
-    if (init_frag.f_flag != XFLAG_ACK_SINIT_SUCCESS)
+    if (init_frag.s_flag != XFLAG_ACK_SINIT_SUCCESS)
     {
         fprintf(stderr,
                 "[!] make_shandshake() failed: receive fragment with invalid flag from peer\n\r");
@@ -191,26 +231,26 @@ int make_shandshake()
 
 int make_shandshake_d()
 {
-    xfragment_t init_frag;
-    if (recv_xfragment(connection_socket, &init_frag))
+    sfragment_t init_frag;
+    if (recv_sfragment(connection_socket, &init_frag))
     {
         fprintf(stderr,
                 "[!] make_shandshake_d() failed: could not receive initital fragment\r\n");
         return -1;
     }
-    if (init_frag.f_flag != XFLAG_SINIT)
+    if (init_frag.s_flag != XFLAG_SINIT)
     {
         fprintf(stderr,
                 "[!] make_shandshake_d() failed: receive fragment with invalid flag\r\n");
         return -1;
     }
 
-    if (xshell_init() == -1)
+    if (xshell_init(&init_frag.s_ws) == -1)
     {
-        snprintf(init_frag.buffer, XFBUFF_SIZE, "failed to create shell: %s\r\n", strerror(errno));
-        init_frag.buff_len = strlen(init_frag.buffer) + 1;
-        init_frag.f_flag = XFLAG_ACK_SINIT_FAILURE;
-        if (send_xfragment(connection_socket, &init_frag) == -1)
+        snprintf(init_frag.buff, SBUFF_SIZE, "failed to create shell: %s\r\n", strerror(errno));
+        init_frag.buff_len = strlen(init_frag.buff) + 1;
+        init_frag.s_flag = XFLAG_ACK_SINIT_FAILURE;
+        if (send_sfragment(connection_socket, &init_frag) == -1)
         {
             fprintf(stderr,
                     "[!] make_shandshake_d():send_xfragment() failed: cannot send ACK fragment\r\n");
@@ -219,9 +259,9 @@ int make_shandshake_d()
     }
 
     // printf("something in between!\n");
-    init_frag.f_flag = XFLAG_ACK_SINIT_SUCCESS;
+    init_frag.s_flag = XFLAG_ACK_SINIT_SUCCESS;
     init_frag.buff_len = 0;
-    if (send_xfragment(connection_socket, &init_frag) == -1)
+    if (send_sfragment(connection_socket, &init_frag) == -1)
     {
         fprintf(stderr,
                 "[!] make_shandshake_d():send_xfragment failed: cannot send ACK fragment\r\n");
@@ -229,10 +269,10 @@ int make_shandshake_d()
     return 0;
 }
 
-static int xshell_init()
+static int xshell_init(const struct winsize *_ws)
 {
     int pid;
-    if ((pid = forkpty(&sg_master_fd, NULL, NULL, NULL)) == -1)
+    if ((pid = forkpty(&sg_master_fd, NULL, NULL, _ws)) == -1)
     {
         fprintf(stderr, "[!] xshell_init():forkpty() failed: %s\r\n",
                 strerror(errno));
@@ -315,7 +355,7 @@ int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state)
 
 int xshell_finish()
 {
-    xfragment_t finish_frag;
+    sfragment_t finish_frag;
     switch (host_state)
     {
     case REQUESTER:
@@ -325,7 +365,7 @@ int xshell_finish()
 
     case RESPONDER:
         finish_frag.buff_len = 0;
-        finish_frag.f_flag = XFLAG_SFINISH;
+        finish_frag.s_flag = XFLAG_SFINISH;
         break;
 
     default:
@@ -334,7 +374,7 @@ int xshell_finish()
         break;
     }
 
-    if (send_xfragment(connection_socket, &finish_frag) == -1)
+    if (send_sfragment(connection_socket, &finish_frag) == -1)
     {
         fprintf(stderr,
                 "[!] xshell_finish():send_xfragment failed: cannot send finish fragment\r\n");
