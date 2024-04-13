@@ -35,6 +35,20 @@ void handle_sigwinch(int signal)
     // printf("Terminal resized: rows=%d, cols=%d\n", ws.ws_row, ws.ws_col);
 }
 
+void send_fin_frag()
+{
+    sending_fragment.buff_len = 0;
+    sending_fragment.s_flag = XFLAG_SFINISH;
+    send_sfragment(connection_socket, &sending_fragment);
+    //printf("fin fragment sent!\n");
+}
+void send_fin_ack_frag()
+{
+    sending_fragment.buff_len = 0;
+    sending_fragment.s_flag = XFLAG_ACK_SFINISH;
+    send_sfragment(connection_socket, &sending_fragment);
+    //printf("ack fin fragment sent!\n");
+}
 static int writeall(int _fd, const void *_buff, uint16_t *_buff_len)
 {
     size_t total = 0,
@@ -102,16 +116,24 @@ static void *write_worker(void *arg)
                 perror("ioctl(TIOCSWINSZ)");
             }
         }
-        if ((recving_fragment.s_flag == XFLAG_SFINISH) || (recving_fragment.s_flag == XFLAG_ACK_SFINISH))
+        if (recving_fragment.s_flag == XFLAG_SFINISH)
         {
             fprintf(stderr, "[~] write_worker(): detect finish fragment\n");
             is_connected = false;
+            send_fin_ack_frag();
             return NULL;
         }
-
+        if ((recving_fragment.s_flag == XFLAG_ACK_SFINISH))
+        {
+            fprintf(stderr,
+                    "[~] write_worker(): detect ack finish fragment");
+            is_connected = false;
+            return NULL;
+        }
         if (writeall(tmp_fd, recving_fragment.buff, &(recving_fragment.buff_len)) == -1)
         {
             printf("[~] write_worker(): writeall() return -1\n");
+            send_fin_frag();
             is_connected = false;
             return NULL;
         }
@@ -161,6 +183,7 @@ static void *read_worker(void *arg)
                     "[~] read_worker():read() failed: %s\r\n",
                     strerror(errno));
             is_connected = false;
+            send_fin_frag();
             return NULL;
         }
         sending_fragment.buff_len = n;
@@ -358,36 +381,44 @@ int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state)
 
 int xshell_finish()
 {
-    sfragment_t finish_frag;
-    switch (host_state)
-    {
-    case REQUESTER:
-        pthread_cancel(read_thread);
-        pthread_cancel(write_thread);
-        return 0;
-        break;
+    // sfragment_t finish_frag;
+    // switch (host_state)
+    // {
+    // case REQUESTER:
+    //     pthread_cancel(read_thread);
+    //     pthread_cancel(write_thread);
+    //     return 0;
+    //     break;
 
-    case RESPONDER:
-        finish_frag.buff_len = 0;
-        finish_frag.s_flag = XFLAG_SFINISH;
-        pthread_cancel(read_thread);
-        pthread_cancel(write_thread);
-        break;
+    // case RESPONDER:
+    //     finish_frag.buff_len = 0;
+    //     finish_frag.s_flag = XFLAG_SFINISH;
+    //     pthread_cancel(read_thread);
+    //     pthread_cancel(write_thread);
+    //     break;
 
-    default:
-        fprintf(stderr,
-                "[!] xshell_finish() failed: invalid state\r\n");
-        break;
-    }
+    // default:
+    //     fprintf(stderr,
+    //             "[!] xshell_finish() failed: invalid state\r\n");
+    //     break;
+    // }
+    pthread_cancel(read_thread);
+    //pthread_cancel(write_thread);
+    // printf("finished called()\n");
+    pthread_join(read_thread, NULL);
+    // printf("read_thrad finished\n");
+    pthread_join(write_thread, NULL);
+    // printf("write_thrad finished\n");
 
-    if (send_sfragment(connection_socket, &finish_frag) == -1)
-    {
-        fprintf(stderr,
-                "[!] xshell_finish():send_xfragment failed: cannot send finish fragment\r\n");
-        return -1;
-    }
-    printf("[+] xshell_finish() finish fragment sends successfully\n\r");
+    // if (send_sfragment(connection_socket, &finish_frag) == -1)
+    // {
+    //     fprintf(stderr,
+    //             "[!] xshell_finish():send_xfragment failed: cannot send finish fragment\r\n");
+    //     return -1;
+    // }
+    // printf("[+] xshell_finish() finish fragment sends successfully\n\r");
     sg_master_fd == -1;
+    connection_socket = NULL;
     return 0;
 }
 
