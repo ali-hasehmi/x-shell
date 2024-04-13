@@ -40,14 +40,14 @@ void send_fin_frag()
     sending_fragment.buff_len = 0;
     sending_fragment.s_flag = XFLAG_SFINISH;
     send_sfragment(connection_socket, &sending_fragment);
-    //printf("fin fragment sent!\n");
+    // printf("fin fragment sent!\n");
 }
 void send_fin_ack_frag()
 {
     sending_fragment.buff_len = 0;
     sending_fragment.s_flag = XFLAG_ACK_SFINISH;
     send_sfragment(connection_socket, &sending_fragment);
-    //printf("ack fin fragment sent!\n");
+    // printf("ack fin fragment sent!\n");
 }
 static int writeall(int _fd, const void *_buff, uint16_t *_buff_len)
 {
@@ -133,7 +133,7 @@ static void *write_worker(void *arg)
         if (writeall(tmp_fd, recving_fragment.buff, &(recving_fragment.buff_len)) == -1)
         {
             printf("[~] write_worker(): writeall() return -1\n");
-            send_fin_frag();
+            // send_fin_frag();
             is_connected = false;
             return NULL;
         }
@@ -190,13 +190,16 @@ static void *read_worker(void *arg)
         memcpy(&sending_fragment.s_ws, &curr_win_size, sizeof(struct winsize));
         // printf("[~] read_worker():read(): %huB read!\n\r", sending_fragment.buff_len);
 
-        if (send_sfragment(connection_socket, &sending_fragment) == -1)
+        if (is_connected)
         {
-            fprintf(stderr,
-                    "[~] read_worker():send_xfragment() failed: %s\r\n",
-                    strerror(errno));
-            is_connected = false;
-            return NULL;
+            if (send_sfragment(connection_socket, &sending_fragment) == -1)
+            {
+                fprintf(stderr,
+                        "[~] read_worker():send_xfragment() failed: %s\r\n",
+                        strerror(errno));
+                is_connected = false;
+                return NULL;
+            }
         }
     }
 }
@@ -339,6 +342,7 @@ static int xshell_init()
 
 int xshell_start(const xtcpsocket_t *_socket, xs_state_t _state)
 {
+
     host_state = _state;
     connection_socket = _socket;
     switch (_state)
@@ -402,8 +406,8 @@ int xshell_finish()
     //             "[!] xshell_finish() failed: invalid state\r\n");
     //     break;
     // }
-    pthread_cancel(read_thread);
-    //pthread_cancel(write_thread);
+    // pthread_cancel(read_thread);
+    // pthread_cancel(write_thread);
     // printf("finished called()\n");
     pthread_join(read_thread, NULL);
     // printf("read_thrad finished\n");
@@ -424,6 +428,7 @@ int xshell_finish()
 
 int xshell_wait()
 {
+
     printf("[~]xshell_wait() runs!\n");
     // pthread_join(write_thread, NULL);
     while (is_connected)

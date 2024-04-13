@@ -216,6 +216,7 @@ int exec_download_command()
     if (target_client == NULL)
     {
         printf("[!] Client with %hu id isn't found!\n", cid);
+        fflush(stdin);
         return -1;
     }
 
