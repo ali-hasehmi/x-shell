@@ -13,7 +13,7 @@ Upload files from the target machine to the attacker machine.
 
 * server side:
 
-int x-shell-server.c change the value of LISTEN_PORT macro to the port you want server listens.
+in x-shell-server.c change the value of LISTEN_PORT macro to the port you want server listens.
 ```bash
 
 gcc -o x-shell-server x-shell-server.c xtcpsocket.c xterminal.c xclient-list.c xclient.c xshell.c xmessage_queue.c xmessage.c sfragment.c xfile.c xfragment.c xrequest.c -lm -lpthread -lutil
