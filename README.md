@@ -9,22 +9,24 @@ Upload files from the target machine to the attacker machine.
 - Simple and lightweight implementation.
 
 ## How To Compile
+I used no external library other than standard C Library (libc) so all You need to have is a C Compiler(e.g. gcc) and make utility then just run `make` in top level directory this will create both Server(attacker) and Client(target) binaries:
 
+`./server/xShellServer` -> attacker binary
 
-* server side:
+`./client/xShellClient` -> target binary
 
-in x-shell-server.c change the value of LISTEN_PORT macro to the port you want server listens.
-```bash
+## How To Change Server Listening Port and IP?
+there is a `config.h` header in the root of the repository, you can change these and some other parameters then you need to run `make` again
 
-gcc -o x-shell-server x-shell-server.c xtcpsocket.c xterminal.c xclient-list.c xclient.c xshell.c xmessage_queue.c xmessage.c sfragment.c xfile.c xfragment.c xrequest.c -lm -lpthread -lutil
+# Why?
+I wanted to learn linux programming, specifically:
+- filesystem handling
+- process management
+- networking in pure C
+- pty
 
-```
-
-* client side:
-
-in x-shell-client.c change the value of SERVER_IP and SERVER_PORT macros to your server's ip and port respectively.
-```bash
-
-gcc -o x-shell-client x-shell-client.c xmessage.c xmessage_queue.c sfragment.c xshell.c xtcpsocket.c xfile.c xrequest.c xfragment.c -lpthread
-
-```
+so it's a learning project and not a real one, therefore it lacks some important features:
+- no encryption at all, just good old plain-text tcp
+- no well-created interactive shell for attacker(probably [gnu-readline](https://en.wikipedia.org/wiki/GNU_Readline) is all what it needs)
+- no server daemon(server needs a deamon to handle connections and a front-end is needed to communicate with deamon)
+- no configuration parsing(You probably don't want to recompile the whole Project just to change a server listening port:) )
